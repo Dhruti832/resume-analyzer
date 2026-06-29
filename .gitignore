@@ -1,0 +1,30 @@
+# Credentials — never commit these
+*.pem
+*.key
+credentials
+credentials.*
+.env
+.env.*
+aws_credentials*
+**/secrets/**
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
