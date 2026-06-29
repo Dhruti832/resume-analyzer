@@ -7,5 +7,5 @@ variable "notification_email" {
 variable "hf_model" {
   description = "Hugging Face model id used for resume scoring."
   type        = string
-  default     = "mistralai/Mistral-7B-Instruct-v0.3"
+  default     = "Qwen/Qwen2.5-7B-Instruct"
 }

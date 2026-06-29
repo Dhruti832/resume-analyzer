@@ -1,0 +1,9 @@
+{
+  "name": "ingest-upload",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-sfn": "^3.700.0"
+  }
+}
