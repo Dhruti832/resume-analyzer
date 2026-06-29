@@ -28,3 +28,6 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Local working/planning docs — not part of the graded deliverables
+plan/

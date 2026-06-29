@@ -38,6 +38,35 @@ resource "aws_lambda_permission" "allow_apigw_create_upload_url" {
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
 
+# --- GET /jobs and GET /results/{candidateId} -> queryApi ---
+
+resource "aws_apigatewayv2_integration" "query_api" {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.query_api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "get_jobs" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /jobs"
+  target    = "integrations/${aws_apigatewayv2_integration.query_api.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_results" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /results/{candidateId}"
+  target    = "integrations/${aws_apigatewayv2_integration.query_api.id}"
+}
+
+resource "aws_lambda_permission" "allow_apigw_query_api" {
+  statement_id  = "AllowAPIGatewayInvokeQueryApi"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.query_api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
 output "api_base_url" {
   value = aws_apigatewayv2_api.main.api_endpoint
 }
