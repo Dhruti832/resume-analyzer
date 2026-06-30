@@ -2,235 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Resume Analyzer</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f0f2f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 40px;
-      max-width: 580px;
-      width: 100%;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
-    }
-    h1 { font-size: 1.65rem; color: #1a1a2e; margin-bottom: 6px; }
-    .subtitle { color: #6b7280; font-size: 0.9rem; margin-bottom: 28px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
-    input[type=file] {
-      width: 100%;
-      padding: 12px;
-      border: 2px dashed #d1d5db;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-bottom: 16px;
-      color: #374151;
-    }
-    input[type=file]:hover { border-color: #6366f1; }
-    button {
-      width: 100%;
-      padding: 13px;
-      background: #4f46e5;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover:not(:disabled) { background: #4338ca; }
-    button:disabled { background: #9ca3af; cursor: not-allowed; }
-    #status {
-      margin-top: 18px;
-      font-size: 0.9rem;
-      color: #6b7280;
-      min-height: 22px;
-    }
-    #status.error { color: #dc2626; }
-    #result { margin-top: 24px; display: none; }
-    .score-box {
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      border: 1px solid #86efac;
-      border-radius: 12px;
-      padding: 22px;
-      text-align: center;
-      margin-bottom: 18px;
-    }
-    .score-box.low { background: linear-gradient(135deg, #fef9f0, #fef3c7); border-color: #fcd34d; }
-    .score-box.mid { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #93c5fd; }
-    .score-num { font-size: 3.2rem; font-weight: 800; color: #15803d; }
-    .score-box.low .score-num { color: #b45309; }
-    .score-box.mid .score-num { color: #1d4ed8; }
-    .score-label { font-size: 0.8rem; color: #6b7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
-    .section { margin-bottom: 18px; }
-    .section h3 {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-    .summary { font-size: 0.92rem; color: #374151; line-height: 1.65; }
-    .skills { display: flex; flex-wrap: wrap; gap: 6px; }
-    .skill-tag {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      border-radius: 20px;
-      padding: 3px 11px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .candidate-id {
-      font-size: 0.72rem;
-      color: #9ca3af;
-      margin-top: 14px;
-      word-break: break-all;
-      padding-top: 14px;
-      border-top: 1px solid #f3f4f6;
-    }
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid #d1d5db;
-      border-top-color: #4f46e5;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5; margin: 0; }
+    .msg { text-align: center; color: #6b7280; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-<div class="card">
-  <h1>AI Resume Analyzer</h1>
-  <p class="subtitle">Upload your resume PDF and get an AI-powered job match score in ~30 seconds.</p>
-
-  <label for="resume">Resume (PDF only)</label>
-  <input type="file" id="resume" accept="application/pdf" />
-  <button id="submit-btn" onclick="analyze()">Analyze Resume</button>
-
-  <div id="status"></div>
-  <div id="result"></div>
+<div class="msg">
+  <div class="spinner"></div>
+  <p>Signing you in…</p>
 </div>
-
+<script src="/config.js"></script>
 <script>
-  const API = "https://gpflnssfqa.execute-api.us-east-1.amazonaws.com";
+  const token = localStorage.getItem("access_token");
+  const group = localStorage.getItem("user_group");
 
-  async function analyze() {
-    const file = document.getElementById("resume").files[0];
-    if (!file) { setStatus("Please select a PDF file.", true); return; }
-    if (file.type !== "application/pdf") { setStatus("Only PDF files are supported.", true); return; }
-
-    const btn = document.getElementById("submit-btn");
-    btn.disabled = true;
-    document.getElementById("result").style.display = "none";
-    setStatus('<span class="spinner"></span>Getting upload URL…');
-
-    let uploadInfo;
-    try {
-      const res = await fetch(`${API}/upload`, { method: "POST" });
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      uploadInfo = await res.json();
-    } catch (e) {
-      setStatus("Failed to connect to API: " + e.message, true);
-      btn.disabled = false;
-      return;
-    }
-
-    const { uploadUrl, candidateId } = uploadInfo;
-    setStatus('<span class="spinner"></span>Uploading resume…');
-
-    try {
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": "application/pdf" },
-      });
-      if (!put.ok) throw new Error(`S3 upload failed: ${put.status}`);
-    } catch (e) {
-      setStatus("Upload error: " + e.message, true);
-      btn.disabled = false;
-      return;
-    }
-
-    setStatus('<span class="spinner"></span>Analyzing resume — usually takes 30–60 seconds…');
-    pollResult(candidateId, btn);
-  }
-
-  async function pollResult(candidateId, btn) {
-    const deadline = Date.now() + 2 * 60 * 1000;
-
-    const interval = setInterval(async () => {
-      if (Date.now() > deadline) {
-        clearInterval(interval);
-        setStatus("Timed out waiting for results. The analysis may still be running — try refreshing in a minute.", true);
-        btn.disabled = false;
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API}/results/${candidateId}`);
-        if (res.status === 404) return; // still processing
-        if (!res.ok) {
-          setStatus("Error fetching results: " + res.status, true);
-          clearInterval(interval);
-          btn.disabled = false;
-          return;
-        }
-        const data = await res.json();
-        clearInterval(interval);
-        setStatus("");
-        showResult(data, candidateId);
-        btn.disabled = false;
-      } catch (_) {
-        // network hiccup — keep polling
-      }
-    }, 5000);
-  }
-
-  function showResult(data, candidateId) {
-    const score = data.matchScore || 0;
-    const boxClass = score >= 70 ? "" : score >= 40 ? "mid" : "low";
-
-    const el = document.getElementById("result");
-    el.style.display = "block";
-    el.innerHTML = `
-      <div class="score-box ${boxClass}">
-        <div class="score-num">${score}</div>
-        <div class="score-label">Overall Match Score / 100</div>
-      </div>
-      ${data.summary ? `<div class="section"><h3>Summary</h3><p class="summary">${escHtml(data.summary)}</p></div>` : ""}
-      ${data.skills?.length ? `<div class="section"><h3>Skills Detected</h3><div class="skills">${data.skills.map(s => `<span class="skill-tag">${escHtml(s)}</span>`).join("")}</div></div>` : ""}
-      <div class="candidate-id">Candidate ID: ${escHtml(candidateId)}</div>
-    `;
-  }
-
-  function setStatus(html, isError = false) {
-    const el = document.getElementById("status");
-    el.innerHTML = html;
-    el.className = isError ? "error" : "";
-  }
-
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  if (token) {
+    window.location.replace(group === "recruiters" ? "/office.html" : "/student.html");
+  } else {
+    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
+    const redirect = encodeURIComponent(frontendBase + "/callback.html");
+    window.location.replace(
+      `${cognitoLoginUrl}/login?client_id=${cognitoClientId}&response_type=token&scope=openid+profile+email&redirect_uri=${redirect}`
+    );
   }
 </script>
 </body>

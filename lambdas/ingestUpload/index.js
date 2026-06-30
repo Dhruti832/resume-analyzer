@@ -3,11 +3,16 @@ const { SFNClient, StartExecutionCommand } = require("@aws-sdk/client-sfn");
 const sfn = new SFNClient({});
 const STATE_MACHINE_ARN = process.env.STATE_MACHINE_ARN;
 
-// Resume keys are written by createUploadUrl as resumes/{candidateId}/{resumeId}.pdf
 function parseKey(key) {
-  const match = key.match(/^resumes\/([^/]+)\/([^/]+)\.pdf$/);
-  if (!match) return null;
-  return { candidateId: match[1], resumeId: match[2] };
+  // Format with jobId:    resumes/{candidateId}/{jobId}/{resumeId}.pdf
+  const m3 = key.match(/^resumes\/([^/]+)\/([^/]+)\/([^/]+)\.pdf$/);
+  if (m3) return { candidateId: m3[1], jobId: m3[2], resumeId: m3[3] };
+
+  // Format without jobId: resumes/{candidateId}/{resumeId}.pdf  (student upload)
+  const m2 = key.match(/^resumes\/([^/]+)\/([^/]+)\.pdf$/);
+  if (m2) return { candidateId: m2[1], resumeId: m2[2], jobId: "general" };
+
+  return null;
 }
 
 exports.handler = async (event) => {
@@ -16,10 +21,7 @@ exports.handler = async (event) => {
     const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
     const ids = parseKey(key);
 
-    if (!ids) {
-      console.warn(`Skipping object with unexpected key format: ${key}`);
-      continue;
-    }
+    if (!ids) { console.warn(`Skipping unexpected key: ${key}`); continue; }
 
     await sfn.send(
       new StartExecutionCommand({
@@ -27,6 +29,6 @@ exports.handler = async (event) => {
         input: JSON.stringify({ bucket, key, ...ids }),
       })
     );
-    console.log(`Started analysis for candidateId=${ids.candidateId} resumeId=${ids.resumeId}`);
+    console.log(`Started analysis: candidateId=${ids.candidateId} jobId=${ids.jobId}`);
   }
 };

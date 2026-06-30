@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Analyzer — Rankings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; }
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    nav .brand { font-weight: 700; color: #1a1a2e; font-size: 1rem; }
+    nav .user { font-size: 0.85rem; color: #6b7280; display: flex; align-items: center; gap: 12px; }
+    nav .user button { background: none; border: 1px solid #d1d5db; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #374151; }
+    .page { max-width: 860px; margin: 32px auto; padding: 0 16px; }
+    .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .top-bar h1 { font-size: 1.25rem; color: #1a1a2e; flex: 1; }
+    select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.88rem; color: #1f2937; outline: none; min-width: 220px; }
+    select:focus { border-color: #6366f1; }
+    button.back { background: #fff; border: 1px solid #d1d5db; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; color: #374151; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    button.back:hover { background: #f9fafb; }
+    .card { background: #fff; border-radius: 14px; padding: 0; box-shadow: 0 2px 16px rgba(0,0,0,0.07); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #f9fafb; padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #e5e7eb; }
+    tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9fafb; }
+    td { padding: 14px 16px; font-size: 0.88rem; color: #374151; vertical-align: top; }
+    .rank { font-weight: 800; color: #6366f1; font-size: 1rem; text-align: center; }
+    .rank.gold { color: #d97706; }
+    .rank.silver { color: #6b7280; }
+    .rank.bronze { color: #92400e; }
+    .score-pill { display: inline-block; padding: 3px 12px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; }
+    .score-high { background: #dcfce7; color: #15803d; }
+    .score-mid { background: #dbeafe; color: #1d4ed8; }
+    .score-low { background: #fef3c7; color: #92400e; }
+    .skills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag { background: #f3f4f6; color: #374151; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; }
+    .summary-cell { max-width: 260px; color: #6b7280; font-size: 0.82rem; line-height: 1.5; }
+    .cid { font-size: 0.7rem; color: #9ca3af; word-break: break-all; }
+    .empty { text-align: center; padding: 48px; color: #9ca3af; font-size: 0.9rem; }
+    .spinner-wrap { text-align: center; padding: 48px; }
+    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<nav>
+  <span class="brand">AI Resume Analyzer — Rankings</span>
+  <div class="user">
+    <span id="nav-email"></span>
+    <button onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="top-bar">
+    <h1>Candidate Rankings</h1>
+    <select id="job-select" onchange="loadRankings()"><option value="">— select a job —</option></select>
+    <button class="back" onclick="window.location.href='/office.html'">← Back to Office</button>
+  </div>
+  <div class="card" id="table-wrap">
+    <div class="empty">Select a job above to view ranked candidates.</div>
+  </div>
+</div>
+
+<script src="/config.js"></script>
+<script>
+  const token = localStorage.getItem("access_token");
+  const group = localStorage.getItem("user_group");
+  if (!token || group !== "recruiters") {
+    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
+    window.location.replace(token ? "/student.html" : `${cognitoLoginUrl}/login?client_id=${cognitoClientId}&response_type=token&scope=openid+profile+email&redirect_uri=${encodeURIComponent(frontendBase + "/callback.html")}`);
+  }
+  document.getElementById("nav-email").textContent = localStorage.getItem("user_email") || "";
+
+  const API = window.APP_CONFIG.apiBase;
+  const authHdr = () => ({ Authorization: `Bearer ${token}` });
+
+  async function init() {
+    const res = await fetch(`${API}/jobs`, { headers: authHdr() });
+    const jobs = await res.json();
+    const sel = document.getElementById("job-select");
+    jobs.forEach(j => {
+      const o = document.createElement("option");
+      o.value = j.jobId; o.textContent = `${j.title} (${j.jobId})`;
+      sel.appendChild(o);
+    });
+
+    // Pre-select jobId from URL query string if provided
+    const params = new URLSearchParams(window.location.search);
+    const presel = params.get("jobId");
+    if (presel) { sel.value = presel; loadRankings(); }
+  }
+
+  async function loadRankings() {
+    const jobId = document.getElementById("job-select").value;
+    const wrap = document.getElementById("table-wrap");
+    if (!jobId) { wrap.innerHTML = '<div class="empty">Select a job above to view ranked candidates.</div>'; return; }
+
+    wrap.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+    try {
+      const res = await fetch(`${API}/jobs/${encodeURIComponent(jobId)}/results`, { headers: authHdr() });
+      if (!res.ok) throw new Error(res.status);
+      const rows = await res.json();
+
+      if (!rows.length) { wrap.innerHTML = '<div class="empty">No results yet for this job. Upload resumes from the Office page.</div>'; return; }
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>
+            <th style="text-align:center">Rank</th>
+            <th>Score</th>
+            <th>Candidate ID</th>
+            <th>Skills</th>
+            <th>Summary</th>
+          </tr></thead>
+          <tbody>${rows.map((r, i) => {
+            const s = r.matchScore || 0;
+            const rankCls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+            const scoreCls = s >= 70 ? "score-high" : s >= 40 ? "score-mid" : "score-low";
+            const skills = (r.skills || []).slice(0,5).map(sk => `<span class="tag">${esc(sk)}</span>`).join("");
+            return `<tr>
+              <td class="rank ${rankCls}">#${i+1}</td>
+              <td><span class="score-pill ${scoreCls}">${s}</span></td>
+              <td><div class="cid">${esc(r.candidateId)}</div></td>
+              <td><div class="skills">${skills}</div></td>
+              <td class="summary-cell">${esc((r.summary||"").slice(0,120))}${(r.summary||"").length>120?"…":""}</td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty">Error loading results: ${esc(String(e))}</div>`;
+    }
+  }
+
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function logout() {
+    localStorage.clear();
+    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
+    window.location.replace(`${cognitoLoginUrl}/logout?client_id=${cognitoClientId}&logout_uri=${encodeURIComponent(frontendBase + "/index.html")}`);
+  }
+
+  init();
+</script>
+</body>
+</html>

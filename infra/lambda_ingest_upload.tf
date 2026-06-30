@@ -6,12 +6,12 @@ data "archive_file" "ingest_upload" {
 
 resource "aws_lambda_function" "ingest_upload" {
   function_name    = "ingestUpload"
-  role              = data.aws_iam_role.lab_role.arn
-  runtime           = "nodejs20.x"
-  handler           = "index.handler"
-  filename          = data.archive_file.ingest_upload.output_path
-  source_code_hash  = data.archive_file.ingest_upload.output_base64sha256
-  timeout           = 10
+  role             = data.aws_iam_role.lab_role.arn
+  runtime          = "nodejs20.x"
+  handler          = "index.handler"
+  filename         = data.archive_file.ingest_upload.output_path
+  source_code_hash = data.archive_file.ingest_upload.output_base64sha256
+  timeout          = 10
 
   environment {
     variables = {

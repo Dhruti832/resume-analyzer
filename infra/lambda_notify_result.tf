@@ -6,12 +6,12 @@ data "archive_file" "notify_result" {
 
 resource "aws_lambda_function" "notify_result" {
   function_name    = "notifyResult"
-  role              = data.aws_iam_role.lab_role.arn
-  runtime           = "nodejs20.x"
-  handler           = "index.handler"
-  filename          = data.archive_file.notify_result.output_path
-  source_code_hash  = data.archive_file.notify_result.output_base64sha256
-  timeout           = 10
+  role             = data.aws_iam_role.lab_role.arn
+  runtime          = "nodejs20.x"
+  handler          = "index.handler"
+  filename         = data.archive_file.notify_result.output_path
+  source_code_hash = data.archive_file.notify_result.output_base64sha256
+  timeout          = 10
 
   environment {
     variables = {

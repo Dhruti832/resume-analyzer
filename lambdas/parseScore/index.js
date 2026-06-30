@@ -46,7 +46,7 @@ function extractJson(text) {
 }
 
 exports.handler = async (event) => {
-  const { candidateId, resumeId, resumeText } = event;
+  const { candidateId, resumeId, resumeText, jobId = "general" } = event;
 
   const jobsResponse = await dynamodb.send(new ScanCommand({ TableName: JOBS_TABLE }));
   const jobs = (jobsResponse.Items || []).map((item) => unmarshall(item));
@@ -90,6 +90,7 @@ exports.handler = async (event) => {
       Item: marshall({
         candidateId,
         resumeId,
+        jobId,
         matchScore: result.matchScore,
         skills: result.skills || [],
         matches: result.matches || [],

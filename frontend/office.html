@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Analyzer — Recruiter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; }
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    nav .brand { font-weight: 700; color: #1a1a2e; font-size: 1rem; }
+    nav .user { font-size: 0.85rem; color: #6b7280; display: flex; align-items: center; gap: 12px; }
+    nav .user button { background: none; border: 1px solid #d1d5db; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #374151; }
+    .page { max-width: 700px; margin: 32px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
+    .card { background: #fff; border-radius: 14px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); }
+    .card h2 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 4px; }
+    .card .sub { font-size: 0.85rem; color: #6b7280; margin-bottom: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    input[type=text], textarea, select {
+      width: 100%; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 7px;
+      font-size: 0.88rem; color: #1f2937; outline: none;
+    }
+    input[type=text]:focus, textarea:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    textarea { resize: vertical; min-height: 72px; }
+    input[type=file] { width: 100%; padding: 10px; border: 2px dashed #d1d5db; border-radius: 8px; font-size: 0.88rem; cursor: pointer; margin-bottom: 10px; }
+    button.primary { padding: 10px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    button.primary:hover:not(:disabled) { background: #4338ca; }
+    button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    button.secondary { padding: 10px 20px; background: #fff; color: #4f46e5; border: 1px solid #6366f1; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    button.secondary:hover { background: #eff6ff; }
+    .msg { margin-top: 10px; font-size: 0.85rem; color: #6b7280; min-height: 18px; }
+    .msg.ok { color: #15803d; } .msg.error { color: #dc2626; }
+    .job-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .job-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+    .job-item .jt { font-weight: 600; font-size: 0.88rem; color: #1f2937; }
+    .job-item .ji { font-size: 0.75rem; color: #9ca3af; }
+    .job-item a { font-size: 0.78rem; color: #4f46e5; text-decoration: none; }
+    .job-item a:hover { text-decoration: underline; }
+    .upload-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+    .upload-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; }
+    .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.done { background: #dcfce7; color: #15803d; }
+    .badge.error { background: #fee2e2; color: #991b1b; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #d1d5db; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 4px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<nav>
+  <span class="brand">AI Resume Analyzer — Recruiter</span>
+  <div class="user">
+    <span id="nav-email"></span>
+    <button onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Post a Job -->
+  <div class="card">
+    <h2>Post a Job Opening</h2>
+    <p class="sub">New postings are immediately available for resume matching.</p>
+    <div class="form-row">
+      <div><label>Job ID (unique slug)</label><input type="text" id="f-jobId" placeholder="e.g. job-004" /></div>
+      <div><label>Job Title</label><input type="text" id="f-title" placeholder="e.g. Full Stack Engineer" /></div>
+    </div>
+    <div class="form-row single">
+      <div><label>Description</label><textarea id="f-desc" placeholder="Brief role description…"></textarea></div>
+    </div>
+    <div class="form-row">
+      <div><label>Required Skills (comma-separated)</label><input type="text" id="f-skills" placeholder="Node.js, AWS, React" /></div>
+      <div><label>Location</label><input type="text" id="f-loc" placeholder="Remote" /></div>
+    </div>
+    <button class="primary" id="post-btn" onclick="postJob()">Post Job</button>
+    <div class="msg" id="post-msg"></div>
+    <div class="job-list" id="job-list"></div>
+  </div>
+
+  <!-- Bulk Upload -->
+  <div class="card">
+    <h2>Bulk Resume Upload</h2>
+    <p class="sub">Select a job, upload multiple PDFs — each is analyzed and ranked automatically.</p>
+    <div class="form-row single" style="margin-bottom:12px">
+      <div><label>Select Job</label>
+        <select id="bulk-job"><option value="">— choose a job —</option></select>
+      </div>
+    </div>
+    <label>Resumes (PDF, multiple allowed)</label>
+    <input type="file" id="bulk-files" accept="application/pdf" multiple />
+    <button class="primary" id="bulk-btn" onclick="bulkUpload()">Upload &amp; Analyze</button>
+    <div class="msg" id="bulk-msg"></div>
+    <div class="upload-list" id="upload-list"></div>
+  </div>
+
+</div>
+
+<script src="/config.js"></script>
+<script>
+  const token = localStorage.getItem("access_token");
+  const group = localStorage.getItem("user_group");
+  if (!token || group !== "recruiters") {
+    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
+    window.location.replace(token ? "/student.html" : `${cognitoLoginUrl}/login?client_id=${cognitoClientId}&response_type=token&scope=openid+profile+email&redirect_uri=${encodeURIComponent(frontendBase + "/callback.html")}`);
+  }
+  document.getElementById("nav-email").textContent = localStorage.getItem("user_email") || "";
+
+  const API = window.APP_CONFIG.apiBase;
+  const authHdr = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" });
+
+  // Load jobs
+  let jobs = [];
+  async function loadJobs() {
+    try {
+      const res = await fetch(`${API}/jobs`, { headers: authHdr() });
+      jobs = await res.json();
+      renderJobs();
+      renderBulkSelect();
+    } catch (_) {}
+  }
+
+  function renderJobs() {
+    const el = document.getElementById("job-list");
+    if (!jobs.length) { el.innerHTML = ""; return; }
+    el.innerHTML = jobs.map(j => `
+      <div class="job-item">
+        <div><div class="jt">${esc(j.title)}</div><div class="ji">${esc(j.jobId)}</div></div>
+        <a href="/results.html?jobId=${encodeURIComponent(j.jobId)}">View Rankings →</a>
+      </div>`).join("");
+  }
+
+  function renderBulkSelect() {
+    const sel = document.getElementById("bulk-job");
+    sel.innerHTML = `<option value="">— choose a job —</option>` +
+      jobs.map(j => `<option value="${esc(j.jobId)}">${esc(j.title)} (${esc(j.jobId)})</option>`).join("");
+  }
+
+  async function postJob() {
+    const jobId = document.getElementById("f-jobId").value.trim();
+    const title = document.getElementById("f-title").value.trim();
+    const description = document.getElementById("f-desc").value.trim();
+    const requiredSkills = document.getElementById("f-skills").value.split(",").map(s => s.trim()).filter(Boolean);
+    const location = document.getElementById("f-loc").value.trim() || "Remote";
+
+    if (!jobId || !title) { setMsg("post-msg", "Job ID and Title are required.", "error"); return; }
+
+    const btn = document.getElementById("post-btn");
+    btn.disabled = true;
+    setMsg("post-msg", "Posting…");
+
+    try {
+      const res = await fetch(`${API}/jobs`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId, title, description, requiredSkills, location }) });
+      if (!res.ok) throw new Error(await res.text());
+      setMsg("post-msg", `Job "${title}" posted successfully.`, "ok");
+      ["f-jobId","f-title","f-desc","f-skills","f-loc"].forEach(id => document.getElementById(id).value = "");
+      await loadJobs();
+    } catch (e) { setMsg("post-msg", "Error: " + e.message, "error"); }
+    btn.disabled = false;
+  }
+
+  async function bulkUpload() {
+    const jobId = document.getElementById("bulk-job").value;
+    const files = Array.from(document.getElementById("bulk-files").files);
+    if (!jobId) { setMsg("bulk-msg", "Please select a job.", "error"); return; }
+    if (!files.length) { setMsg("bulk-msg", "Please select at least one PDF.", "error"); return; }
+
+    document.getElementById("bulk-btn").disabled = true;
+    setMsg("bulk-msg", `Uploading ${files.length} resume(s)…`);
+
+    const listEl = document.getElementById("upload-list");
+    listEl.innerHTML = "";
+
+    const items = files.map((f, i) => {
+      const div = document.createElement("div");
+      div.className = "upload-item";
+      div.id = `item-${i}`;
+      div.innerHTML = `<span>${esc(f.name)}</span><span class="badge pending">Queued</span>`;
+      listEl.appendChild(div);
+      return { file: f, idx: i };
+    });
+
+    for (const { file, idx } of items) {
+      setBadge(idx, "pending", "Uploading…");
+      try {
+        const res = await fetch(`${API}/upload`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId }) });
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const { uploadUrl, candidateId } = await res.json();
+
+        const put = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": "application/pdf" } });
+        if (!put.ok) throw new Error(`S3 ${put.status}`);
+
+        setBadge(idx, "done", `Queued (${candidateId.slice(0,8)}…)`);
+      } catch (e) {
+        setBadge(idx, "error", "Failed: " + e.message);
+      }
+    }
+
+    setMsg("bulk-msg", "All uploads done. Analysis runs in the background — check Rankings in ~1 min.", "ok");
+    document.getElementById("bulk-btn").disabled = false;
+  }
+
+  function setBadge(idx, cls, text) {
+    const el = document.getElementById(`item-${idx}`);
+    if (el) el.querySelector(".badge").className = `badge ${cls}`, el.querySelector(".badge").textContent = text;
+  }
+  function setMsg(id, text, cls = "") { const el = document.getElementById(id); el.textContent = text; el.className = `msg ${cls}`; }
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function logout() {
+    localStorage.clear();
+    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
+    window.location.replace(`${cognitoLoginUrl}/logout?client_id=${cognitoClientId}&logout_uri=${encodeURIComponent(frontendBase + "/index.html")}`);
+  }
+
+  loadJobs();
+</script>
+</body>
+</html>

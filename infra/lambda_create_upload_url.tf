@@ -6,12 +6,12 @@ data "archive_file" "create_upload_url" {
 
 resource "aws_lambda_function" "create_upload_url" {
   function_name    = "createUploadUrl"
-  role              = data.aws_iam_role.lab_role.arn
-  runtime           = "nodejs20.x"
-  handler           = "index.handler"
-  filename          = data.archive_file.create_upload_url.output_path
-  source_code_hash  = data.archive_file.create_upload_url.output_base64sha256
-  timeout           = 10
+  role             = data.aws_iam_role.lab_role.arn
+  runtime          = "nodejs20.x"
+  handler          = "index.handler"
+  filename         = data.archive_file.create_upload_url.output_path
+  source_code_hash = data.archive_file.create_upload_url.output_base64sha256
+  timeout          = 10
 
   environment {
     variables = {
