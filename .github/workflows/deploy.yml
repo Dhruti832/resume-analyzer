@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
@@ -45,6 +45,10 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
+      - name: Install queryApi Lambda dependencies
+        working-directory: lambdas/queryApi
+        run: npm ci
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -57,6 +61,13 @@ jobs:
       - name: Terraform Validate
         working-directory: infra
         run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra
+        env:
+          TF_VAR_demo_user_password: ${{ secrets.DEMO_USER_PASSWORD }}
+          TF_VAR_hf_token: ${{ secrets.HF_TOKEN }}
+        run: terraform plan
 
       - name: Terraform Apply
         working-directory: infra
