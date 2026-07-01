@@ -1,4 +1,4 @@
-const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { unmarshall, marshall } = require("@aws-sdk/util-dynamodb");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -6,6 +6,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const dynamodb = new DynamoDBClient({});
 const s3 = new S3Client({});
 const RESULTS_TABLE = process.env.RESULTS_TABLE;
+const JOBS_TABLE = process.env.JOBS_TABLE;
 const RESUME_BUCKET = process.env.RESUME_BUCKET;
 const DEFAULT_LIMIT = 50;
 
@@ -29,8 +30,21 @@ exports.handler = async (event) => {
     return respond(403, { error: "Recruiters only" });
   }
 
+  const recruiterId = event.requestContext?.authorizer?.jwt?.claims?.sub;
   const jobId = event.pathParameters?.jobId;
   if (!jobId) return respond(400, { error: "Missing jobId" });
+
+  // Verify the requesting recruiter owns this job
+  const jobItem = await dynamodb.send(new GetItemCommand({
+    TableName: process.env.JOBS_TABLE,
+    Key: { jobId: { S: jobId } },
+    ProjectionExpression: "ownerId",
+  }));
+  if (!jobItem.Item) return respond(404, { error: "Job not found" });
+  const jobOwnerId = jobItem.Item.ownerId?.S;
+  if (jobOwnerId && jobOwnerId !== recruiterId) {
+    return respond(403, { error: "You do not own this job" });
+  }
 
   const qs = event.queryStringParameters || {};
   const limit = Math.min(parseInt(qs.limit, 10) || DEFAULT_LIMIT, 100);

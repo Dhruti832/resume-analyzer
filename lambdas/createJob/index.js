@@ -27,6 +27,7 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body || "{}");
   const { jobId, title, description, requiredSkills, location } = body;
+  const ownerId = event.requestContext?.authorizer?.jwt?.claims?.sub || "unknown";
 
   if (!jobId || !title) {
     return respond(400, { error: "jobId and title are required" });
@@ -41,6 +42,7 @@ exports.handler = async (event) => {
         description: description || "",
         requiredSkills: requiredSkills || [],
         location: location || "Remote",
+        ownerId,
         createdAt: new Date().toISOString(),
       }),
     })

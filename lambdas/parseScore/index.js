@@ -152,6 +152,7 @@ exports.handler = async (event) => {
         jobId,
         userId,
         candidateName,
+        status: "completed",
         matchScore: result.matchScore,
         skills: result.skills || [],
         matches: result.matches || [],

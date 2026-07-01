@@ -14,6 +14,14 @@ function contentTypeFor(key) {
   return CONTENT_TYPES[ext] || "application/octet-stream";
 }
 
+const SECURITY_HEADERS = {
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
+
 exports.handler = async (event) => {
   let path = event.rawPath || "/";
   if (path === "/" || path === "") path = "/index.html";
@@ -24,10 +32,18 @@ exports.handler = async (event) => {
     const body = await obj.Body.transformToString();
     return {
       statusCode: 200,
-      headers: { "Content-Type": contentTypeFor(key), "Cache-Control": "no-cache" },
+      headers: {
+        "Content-Type": contentTypeFor(key),
+        "Cache-Control": "no-cache",
+        ...SECURITY_HEADERS,
+      },
       body,
     };
   } catch (err) {
-    return { statusCode: 404, headers: { "Content-Type": "text/plain" }, body: "Not found" };
+    return {
+      statusCode: 404,
+      headers: { "Content-Type": "text/plain", ...SECURITY_HEADERS },
+      body: "Not found",
+    };
   }
 };

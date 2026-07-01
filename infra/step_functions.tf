@@ -18,7 +18,7 @@ resource "aws_sfn_state_machine" "resume_analysis" {
         }]
         Catch = [{
           ErrorEquals = ["States.ALL"]
-          Next        = "NotifyErrorStep"
+          Next        = "MarkFailedStep"
           ResultPath  = "$.error"
         }]
       }
@@ -34,7 +34,7 @@ resource "aws_sfn_state_machine" "resume_analysis" {
         }]
         Catch = [{
           ErrorEquals = ["States.ALL"]
-          Next        = "NotifyErrorStep"
+          Next        = "MarkFailedStep"
           ResultPath  = "$.error"
         }]
       }
@@ -44,19 +44,53 @@ resource "aws_sfn_state_machine" "resume_analysis" {
         End      = true
         Catch = [{
           ErrorEquals = ["States.ALL"]
-          Next        = "NotifyErrorStep"
+          Next        = "MarkFailedStep"
           ResultPath  = "$.error"
+        }]
+      }
+      # Uses Step Functions SDK integration to update DynamoDB directly — no extra Lambda needed.
+      # ResultPath null keeps the original state (including $.candidateId) flowing to NotifyErrorStep.
+      MarkFailedStep = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::dynamodb:updateItem"
+        Parameters = {
+          TableName = aws_dynamodb_table.results.name
+          Key = {
+            candidateId = { "S.$" = "$.candidateId" }
+            resumeId    = { "S.$" = "$.resumeId" }
+          }
+          UpdateExpression                   = "SET #st = :failed"
+          ExpressionAttributeNames           = { "#st" = "status" }
+          ExpressionAttributeValues          = { ":failed" = { S = "failed" } }
+          ConditionExpression                = "attribute_exists(candidateId)"
+        }
+        ResultPath = null
+        Next       = "NotifyErrorStep"
+        Catch = [{
+          ErrorEquals = ["States.ALL"]
+          Next        = "NotifyErrorStep"
+          ResultPath  = null
         }]
       }
       NotifyErrorStep = {
         Type     = "Task"
         Resource = "arn:aws:states:::sns:publish"
         Parameters = {
-          TopicArn = aws_sns_topic.resume_notifications.arn
+          TopicArn    = aws_sns_topic.resume_notifications.arn
           "Message.$" = "States.Format('Resume analysis failed for candidateId: {}. Error: {}', $.candidateId, $.error.Cause)"
-          Subject = "Resume Analysis Failed"
+          Subject     = "Resume Analysis Failed"
         }
         End = true
+        Catch = [{
+          ErrorEquals = ["States.ALL"]
+          Next        = "AnalysisFailed"
+          ResultPath  = null
+        }]
+      }
+      AnalysisFailed = {
+        Type  = "Fail"
+        Error = "AnalysisFailed"
+        Cause = "All error-handling paths exhausted"
       }
     }
   })

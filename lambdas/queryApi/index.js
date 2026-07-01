@@ -30,6 +30,7 @@ exports.handler = async (event) => {
   }
 
   if (routeKey === "GET /results/{candidateId}") {
+    const requesterId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     const candidateId = event.pathParameters?.candidateId;
     if (!candidateId) return respond(400, { error: "Missing candidateId" });
 
@@ -44,8 +45,12 @@ exports.handler = async (event) => {
     const items = (result.Items || []).map(unmarshall);
     if (items.length === 0) return respond(404, { error: "No results found" });
 
-    const sorted = items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return respond(200, sorted[0]);
+    // Students may only access their own results
+    const record = items.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (record.userId && record.userId !== requesterId) {
+      return respond(403, { error: "Access denied" });
+    }
+    return respond(200, record);
   }
 
   if (routeKey === "GET /my-results") {

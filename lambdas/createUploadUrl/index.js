@@ -44,13 +44,20 @@ exports.handler = async (event) => {
   const resumeId = randomUUID();
   const candidateName = (body.candidateName || "").trim().slice(0, 120);
 
-  // Seed the ResultsTable so downstream lambdas can look up the original filename
-  if (candidateName) {
-    await dynamodb.send(new PutItemCommand({
-      TableName: process.env.RESULTS_TABLE,
-      Item: marshall({ candidateId, resumeId, candidateName, jobId, userId }),
-    }));
-  }
+  // Seed ResultsTable immediately so history shows "pending" while Step Functions runs.
+  // parseScore will overwrite this with the full completed record.
+  await dynamodb.send(new PutItemCommand({
+    TableName: process.env.RESULTS_TABLE,
+    Item: marshall({
+      candidateId,
+      resumeId,
+      jobId,
+      userId,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      ...(candidateName ? { candidateName } : {}),
+    }),
+  }));
   // userId is encoded in the key so ingestUpload can pass it through Step Functions
   const key = `resumes/${userId}/${candidateId}/${jobId}/${resumeId}.pdf`;
 

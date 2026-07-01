@@ -22,6 +22,23 @@ resource "aws_s3_bucket_versioning" "resumes" {
 }
 
 # Allows the browser to PUT directly to the presigned URL from the deployed frontend origin only.
+resource "aws_s3_bucket_lifecycle_configuration" "resumes" {
+  bucket = aws_s3_bucket.resumes.id
+
+  rule {
+    id     = "expire-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_cors_configuration" "resumes" {
   bucket = aws_s3_bucket.resumes.id
 
