@@ -11,9 +11,10 @@ variable "hf_model" {
 }
 
 variable "hf_token" {
-  description = "Hugging Face API token stored in Secrets Manager. Set via terraform.tfvars locally (gitignored) or TF_VAR_hf_token CI secret. Never commit the actual value."
+  description = "Hugging Face API token stored in Secrets Manager. Set via terraform.tfvars locally (gitignored) or TF_VAR_hf_token CI secret. Never commit the actual value. Leave empty to skip writing the secret version."
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "demo_user_password" {
