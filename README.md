@@ -1,40 +1,136 @@
 # AI Resume Analyzer & Job Matcher
 
-Serverless AI-powered resume screening system built on AWS using Terraform, with
-Cognito-backed auth for two user roles: students (self-upload, see own score)
-and recruiters (post jobs, bulk-upload resumes, view ranked candidates per job).
+Serverless AI-powered resume screening system built on AWS using Terraform IaC.
+Two user roles: **students** (upload resume, see their own AI score and feedback)
+and **recruiters** (post jobs, bulk-upload resumes, view ranked candidates with charts).
 
 ## Architecture
 
-Upload PDF → S3 → Step Functions → Textract → Hugging Face LLM → DynamoDB → SNS email
+```
+Student/Recruiter Browser
+        │
+        ▼
+API Gateway (HTTP API) ──JWT authorizer──▶ Cognito User Pool
+        │                                  (students / recruiters groups)
+   ┌────┴────────────────────────────────────────────┐
+   │  POST /upload     GET /jobs    POST /jobs        │
+   │  GET /results     GET /my-results                │
+   │  GET /jobs/{id}/results                          │
+   └────┬────────────────────────────────────────────┘
+        │
+   Lambda Functions
+        │
+        ├─ createUploadUrl ──▶ S3 presigned PUT URL ──▶ Resume S3 Bucket
+        │                       (seeds ResultsTable: status=pending)
+        │
+        ├─ S3 Event ──▶ ingestUpload ──▶ Step Functions State Machine
+        │                                       │
+        │                         ┌─────────────┼─────────────┐
+        │                    ExtractText    ParseAndScore  NotifyResult
+        │                    (Textract)   (HF LLM via     (SNS email)
+        │                                Secrets Manager)
+        │                         │
+        │                    MarkFailedStep (DynamoDB SDK) ──▶ NotifyErrorStep (SNS)
+        │                    [on any error]
+        │
+        ├─ queryApi ──▶ DynamoDB ResultsTable / JobsTable
+        ├─ getRankedResults ──▶ DynamoDB GSI (jobId-matchScore-index, sorted desc)
+        └─ createJob ──▶ DynamoDB JobsTable
 
-Auth: Cognito Hosted UI (implicit flow) → API Gateway JWT authorizer → group-based
-authorization (`students` / `recruiters`) enforced inside each Lambda.
+DynamoDB ResultsTable: PK=candidateId, SK=resumeId
+  GSIs: userId-createdAt-index (student history), jobId-matchScore-index (recruiter ranking)
 
-The static frontend is served over HTTPS via a dedicated API Gateway + Lambda
-(`serveFrontend`) that reads pages from a private S3 bucket — this Learner Lab
-account blocks `cloudfront:CreateDistribution`, so CloudFront could not be used
-as the HTTPS-terminating layer Cognito requires for callback URLs.
+Monitoring: CloudWatch Alarms on all 8 Lambdas + Step Functions failures + DynamoDB throttles
+```
+
+The frontend is served via a dedicated Lambda (`serveFrontend`) reading from a private S3 bucket
+through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
+
+## Features
+
+**Student portal**
+- Upload resume as PDF against any posted job or paste a custom job description
+- Real-time analysis progress stepper (Upload → Textract → AI Scoring → Complete)
+- History tab showing all past analyses with status (pending / completed / failed)
+- Per-analysis: match score, matched skills, strengths, gaps, and improvement recommendations
+- Resume PDF download
+
+**Recruiter portal**
+- Post job openings with required skills and location
+- Drag-and-drop bulk resume upload (multiple PDFs at once)
+- Ranked candidates page with:
+  - Stat cards (total applicants, average score, top score, strong matches ≥70)
+  - Score distribution bar chart + top skills frequency chart (Chart.js)
+  - Ranked table with score pill, mini progress bar, skills, and summary
+
+**Infrastructure**
+- Cognito-backed auth with Post-Confirmation Lambda for automatic group assignment
+- Step Functions error handling: failed analyses update DynamoDB (`status=failed`) and send SNS alert
+- S3 lifecycle: 30-day noncurrent version expiry, 7-day incomplete multipart cleanup
+- API Gateway throttling: 100 rps / 50 burst
+- HF API token stored in AWS Secrets Manager (never in code or IaC)
+- Security headers on all frontend responses (HSTS, X-Frame-Options, CSP)
 
 ## Services Used
 
-- AWS Lambda, API Gateway (HTTP API, JWT authorizer), S3, DynamoDB, Step Functions, Textract, SNS, EventBridge, Cognito
-- Hugging Face Inference API (Qwen/Qwen2.5-7B-Instruct)
-- Terraform (IaC), GitHub Actions (CI/CD)
+| Category | Services |
+|---|---|
+| Compute | AWS Lambda (Node.js 20.x) |
+| Orchestration | AWS Step Functions (Standard Workflows) |
+| API | Amazon API Gateway (HTTP API, JWT authorizer) |
+| Storage | Amazon S3 (resumes + frontend), Amazon DynamoDB |
+| AI/ML | Amazon Textract, Hugging Face Inference API (Qwen/Qwen2.5-7B-Instruct) |
+| Auth | Amazon Cognito (User Pool, Hosted UI, groups) |
+| Messaging | Amazon SNS |
+| Secrets | AWS Secrets Manager |
+| Monitoring | Amazon CloudWatch (10 metric alarms) |
+| IaC / CI | Terraform, GitHub Actions |
 
 ## API Endpoints
 
-All routes require a Cognito-issued JWT (`Authorization: Bearer <token>`).
+All routes require `Authorization: Bearer <cognito-id-token>`.
 
 | Method | Path | Role | Description |
-|--------|------|------|-------------|
-| POST | /upload | any | Get presigned S3 URL for PDF upload (optional `jobId` in body for recruiter bulk uploads) |
-| GET | /jobs | any | List all job postings |
-| POST | /jobs | recruiters | Post a new job opening |
-| GET | /results/{candidateId} | any | Get analysis result for a candidate |
-| GET | /jobs/{jobId}/results | recruiters | Ranked candidate list for a job (highest score first) |
+|---|---|---|---|
+| POST | /upload | any | Presigned S3 PUT URL; seeds `status=pending` in ResultsTable |
+| GET | /jobs | any | List all public job postings |
+| POST | /jobs | recruiters | Create a job posting |
+| GET | /results/{candidateId} | owner only | Get analysis result (403 if not owner) |
+| GET | /my-results | students | Paginated history with job details and download URLs |
+| GET | /jobs/{jobId}/results | recruiters | Ranked candidates for a job (ownership enforced) |
+
+Pagination: `?limit=N&nextToken=<base64url>` on `/my-results` and `/jobs/{jobId}/results`.
+
+## Running Tests
+
+```bash
+npm install
+npm test
+```
+
+Tests use [aws-sdk-client-mock](https://github.com/m-radzikowski/aws-sdk-client-mock) to mock
+all AWS SDK calls — no AWS credentials needed.
+
+```
+Test Suites: 6 passed
+Tests:       75 passed
+```
 
 ## Deploy
+
+### Prerequisites
+
+- Terraform ≥ 1.9
+- AWS CLI with Learner Lab credentials
+- `infra/terraform.tfvars` (gitignored):
+
+```hcl
+demo_user_password = "YourPassword123!"
+notification_email = "you@example.com"   # optional — SNS alert recipient
+hf_token           = "hf_..."            # Hugging Face API token
+```
+
+### Steps
 
 ```bash
 cd infra
@@ -42,12 +138,26 @@ terraform init
 terraform apply -auto-approve
 ```
 
-> **Note:** AWS Academy Learner Lab credentials expire every ~4 hours.
+> **AWS Academy Learner Lab:** credentials expire every ~4 hours.
 > Update `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`
-> in GitHub repository secrets before each deploy session.
+> in GitHub repository secrets before each CI deploy.
 
-> **Note:** Set a `DEMO_USER_PASSWORD` GitHub repository secret (any password
-> meeting the Cognito pool's policy: 8+ chars, upper, lower, number) before
-> the next CI deploy — it's used to set a permanent password for the two
-> Terraform-managed demo accounts (`student1@test.com`, `recruiter1@test.com`).
-> Locally, set `demo_user_password` in `infra/terraform.tfvars` (gitignored).
+### Demo accounts
+
+Two Terraform-managed accounts are created automatically:
+
+| Role | Email | Password |
+|---|---|---|
+| Student | student1@test.com | `demo_user_password` from tfvars |
+| Recruiter | recruiter1@test.com | `demo_user_password` from tfvars |
+
+## CI/CD
+
+GitHub Actions runs on every push to `main`:
+
+1. **Unit tests** — `npm test` must pass before deploy starts
+2. **Terraform apply** — deploys infra and Lambda code changes to AWS
+
+Secrets required in GitHub repository settings:
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`,
+`DEMO_USER_PASSWORD`, `HF_TOKEN`
