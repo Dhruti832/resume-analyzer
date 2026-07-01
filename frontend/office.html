@@ -106,6 +106,15 @@
     .modal-msg.ok { color: #15803d; } .modal-msg.error { color: #dc2626; }
     .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #d1d5db; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 5px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast notifications ── */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.18); min-width: 220px; max-width: 340px; pointer-events: auto; animation: toastIn 0.25s ease; }
+    .toast.success { background: #15803d; }
+    .toast.error   { background: #dc2626; }
+    .toast.info    { background: #4f46e5; }
+    .toast-icon { flex-shrink: 0; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     .upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
     .upload-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; }
     .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
@@ -152,6 +161,7 @@
     </div>
   </div>
 </nav>
+<div class="toast-container" id="toast-container"></div>
 
 <!-- ── Main ── -->
 <div class="page">
@@ -379,10 +389,13 @@
     try {
       const res = await fetch(`${API}/jobs`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId, title, description, requiredSkills, location }) });
       if (!res.ok) throw new Error(await res.text());
-      setModalMsg("job-modal-msg", `"${title}" posted!`, "ok");
-      setTimeout(() => closeModal("modal-job"), 900);
+      closeModal("modal-job");
+      showToast(`"${title}" posted successfully!`, "success");
       await loadJobs();
-    } catch (e) { setModalMsg("job-modal-msg", "Error: " + e.message, "error"); }
+    } catch (e) {
+      setModalMsg("job-modal-msg", "Error: " + e.message, "error");
+      showToast("Failed to post job.", "error");
+    }
     btn.disabled = false;
   }
 
@@ -418,7 +431,7 @@
         setBadge(idx, "done", `Queued · ${candidateId.slice(0,8)}…`);
       } catch (e) { setBadge(idx, "fail", "Failed"); }
     }
-    setModalMsg("upload-modal-msg", '<span class="spinner"></span>Redirecting to analysis…', "ok");
+    showToast("Resumes uploaded — redirecting to rankings…", "success");
     setTimeout(() => window.location.href = `/results.html?jobId=${encodeURIComponent(activeUploadJobId)}`, 1200);
     document.getElementById("bulk-btn").disabled = false;
   }
@@ -435,6 +448,18 @@
     const el = document.getElementById(id);
     el.innerHTML = html;
     el.className = `modal-msg ${cls}`;
+  }
+  function showToast(message, type = "info", duration = 4000) {
+    const icons = {
+      success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      error:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      info:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    };
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${message}</span>`;
+    document.getElementById("toast-container").appendChild(t);
+    setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; setTimeout(() => t.remove(), 320); }, duration);
   }
   function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function logout() {

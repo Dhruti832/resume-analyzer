@@ -99,9 +99,20 @@
     .btn-dl:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
 
     .empty { text-align: center; padding: 56px; color: #9ca3af; font-size: 0.9rem; }
+    .empty .btn-refresh { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 8px 18px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+    .empty .btn-refresh:hover { background: #4338ca; }
     .spinner-wrap { text-align: center; padding: 56px; }
     .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Skeleton loader */
+    @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+    .skel-row td { padding: 13px 16px; }
+    .skel-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg,#f3f4f6 25%,#e9eaec 50%,#f3f4f6 75%); background-size: 600px 100%; animation: shimmer 1.4s infinite; }
+    .skel-line.w30 { width: 30%; }
+    .skel-line.w50 { width: 50%; }
+    .skel-line.w70 { width: 70%; }
+    .skel-line.w90 { width: 90%; }
 
     @media (max-width: 760px) {
       .stat-grid { grid-template-columns: 1fr 1fr; }
@@ -245,13 +256,29 @@
     if (presel) { sel.value = presel; loadRankings(); }
   }
 
+  function skeletonTable(rows = 6) {
+    const skRows = Array.from({ length: rows }, () => `
+      <tr class="skel-row">
+        <td><div class="skel-line w30"></div></td>
+        <td><div class="skel-line w70"></div><div class="skel-line w30" style="margin-top:6px"></div></td>
+        <td><div class="skel-line w50"></div></td>
+        <td><div class="skel-line w90"></div></td>
+        <td><div class="skel-line w50"></div></td>
+        <td><div class="skel-line w30"></div></td>
+      </tr>`).join("");
+    return `<div class="card"><div class="card-header"><h2>Loading candidates…</h2></div>
+      <table><thead><tr>
+        <th>#</th><th>Candidate</th><th>Score</th><th>Skills</th><th>Summary</th><th>Resume</th>
+      </tr></thead><tbody>${skRows}</tbody></table></div>`;
+  }
+
   async function loadRankings() {
     const jobId = document.getElementById("job-select").value;
     const wrap = document.getElementById("table-wrap");
     document.getElementById("analytics").style.display = "none";
     if (!jobId) { wrap.innerHTML = '<div class="empty">Select a job above to view ranked candidates.</div>'; return; }
 
-    wrap.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+    wrap.innerHTML = skeletonTable();
     try {
       const res = await fetch(`${API}/jobs/${encodeURIComponent(jobId)}/results`, { headers: authHdr() });
       if (!res.ok) throw new Error(res.status);
@@ -259,14 +286,22 @@
       const rows = data.items ?? data;
 
       if (!rows.length) {
-        wrap.innerHTML = '<div class="empty">No results yet for this job. Upload resumes from the Office page.</div>';
+        wrap.innerHTML = `<div class="empty">No results yet for this job. Upload resumes from the Office page.<br>
+          <button class="btn-refresh" onclick="loadRankings()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button></div>`;
         return;
       }
 
       renderAnalytics(rows);
       renderTable(rows, wrap);
     } catch (e) {
-      wrap.innerHTML = `<div class="empty">Error loading results: ${esc(String(e))}</div>`;
+      wrap.innerHTML = `<div class="empty">Error loading results: ${esc(String(e))}<br>
+        <button class="btn-refresh" onclick="loadRankings()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Retry
+        </button></div>`;
     }
   }
 
