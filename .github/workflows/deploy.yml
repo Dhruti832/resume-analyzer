@@ -42,6 +42,7 @@ jobs:
         working-directory: infra
         env:
           TF_VAR_demo_user_password: ${{ secrets.DEMO_USER_PASSWORD }}
+          TF_VAR_hf_token: ${{ secrets.HF_TOKEN }}
         run: terraform apply -auto-approve
 
       - name: Print outputs

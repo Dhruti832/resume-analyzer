@@ -255,7 +255,8 @@
     try {
       const res = await fetch(`${API}/jobs/${encodeURIComponent(jobId)}/results`, { headers: authHdr() });
       if (!res.ok) throw new Error(res.status);
-      const rows = await res.json();
+      const data = await res.json();
+      const rows = data.items ?? data;
 
       if (!rows.length) {
         wrap.innerHTML = '<div class="empty">No results yet for this job. Upload resumes from the Office page.</div>';

@@ -389,7 +389,8 @@
     try {
       const res = await fetch(`${API}/my-results`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) { el.innerHTML = '<div class="empty">Could not load history.</div>'; return; }
-      const items = await res.json();
+      const data = await res.json();
+      const items = data.items ?? data;
       if (!items.length) {
         el.innerHTML = '<div class="empty">No analyses yet — go to Analyze Resume to get started.</div>';
         return;

@@ -48,7 +48,7 @@ exports.handler = async (event) => {
   if (candidateName) {
     await dynamodb.send(new PutItemCommand({
       TableName: process.env.RESULTS_TABLE,
-      Item: marshall({ candidateId, resumeId, candidateName }),
+      Item: marshall({ candidateId, resumeId, candidateName, jobId, userId }),
     }));
   }
   // userId is encoded in the key so ingestUpload can pass it through Step Functions

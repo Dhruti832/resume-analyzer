@@ -76,9 +76,13 @@ function extractJson(text) {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end === -1) {
-    throw new Error(`No JSON object found in LLM response: ${text}`);
+    throw new Error(`No JSON object found in LLM response: ${text.slice(0, 200)}`);
   }
-  return JSON.parse(text.slice(start, end + 1));
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch (e) {
+    throw new Error(`Failed to parse JSON from LLM response: ${e.message} — snippet: ${text.slice(start, start + 200)}`);
+  }
 }
 
 exports.handler = async (event) => {

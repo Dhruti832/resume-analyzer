@@ -52,12 +52,23 @@ exports.handler = async (event) => {
     const userId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     if (!userId) return respond(401, { error: "Unauthorized" });
 
+    const qs = event.queryStringParameters || {};
+    const limit = Math.min(parseInt(qs.limit, 10) || 50, 100);
+    let exclusiveStartKey;
+    if (qs.nextToken) {
+      try {
+        exclusiveStartKey = JSON.parse(Buffer.from(qs.nextToken, "base64url").toString("utf8"));
+      } catch (_) {}
+    }
+
     const result = await dynamodb.send(new QueryCommand({
       TableName: RESULTS_TABLE,
       IndexName: "userId-createdAt-index",
       KeyConditionExpression: "userId = :uid",
       ExpressionAttributeValues: { ":uid": { S: userId } },
       ScanIndexForward: false,
+      Limit: limit,
+      ...(exclusiveStartKey ? { ExclusiveStartKey: exclusiveStartKey } : {}),
     }));
 
     // Fetch full job details — "description" and "location" are DynamoDB reserved
@@ -83,9 +94,11 @@ exports.handler = async (event) => {
           downloadUrl = await getSignedUrl(
             s3,
             new GetObjectCommand({ Bucket: RESUME_BUCKET, Key: r.s3Key }),
-            { expiresIn: 3600 }
+            { expiresIn: 600 }
           );
-        } catch (_) {}
+        } catch (err) {
+          console.error("Failed to generate presigned URL for", r.s3Key, err);
+        }
       }
 
       return {
@@ -98,7 +111,11 @@ exports.handler = async (event) => {
       };
     }));
 
-    return respond(200, items);
+    const response = { items };
+    if (result.LastEvaluatedKey) {
+      response.nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString("base64url");
+    }
+    return respond(200, response);
   }
 
   return respond(404, { error: "Route not found" });

@@ -1,5 +1,5 @@
 const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
-const { unmarshall } = require("@aws-sdk/util-dynamodb");
+const { unmarshall, marshall } = require("@aws-sdk/util-dynamodb");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
@@ -7,6 +7,7 @@ const dynamodb = new DynamoDBClient({});
 const s3 = new S3Client({});
 const RESULTS_TABLE = process.env.RESULTS_TABLE;
 const RESUME_BUCKET = process.env.RESUME_BUCKET;
+const DEFAULT_LIMIT = 50;
 
 function respond(statusCode, body) {
   return {
@@ -31,6 +32,15 @@ exports.handler = async (event) => {
   const jobId = event.pathParameters?.jobId;
   if (!jobId) return respond(400, { error: "Missing jobId" });
 
+  const qs = event.queryStringParameters || {};
+  const limit = Math.min(parseInt(qs.limit, 10) || DEFAULT_LIMIT, 100);
+  let exclusiveStartKey;
+  if (qs.nextToken) {
+    try {
+      exclusiveStartKey = JSON.parse(Buffer.from(qs.nextToken, "base64url").toString("utf8"));
+    } catch (_) {}
+  }
+
   const result = await dynamodb.send(
     new QueryCommand({
       TableName: RESULTS_TABLE,
@@ -38,6 +48,8 @@ exports.handler = async (event) => {
       KeyConditionExpression: "jobId = :jid",
       ExpressionAttributeValues: { ":jid": { S: jobId } },
       ScanIndexForward: false,
+      Limit: limit,
+      ...(exclusiveStartKey ? { ExclusiveStartKey: exclusiveStartKey } : {}),
     })
   );
 
@@ -50,13 +62,20 @@ exports.handler = async (event) => {
           downloadUrl = await getSignedUrl(
             s3,
             new GetObjectCommand({ Bucket: RESUME_BUCKET, Key: r.s3Key }),
-            { expiresIn: 3600 }
+            { expiresIn: 600 }
           );
-        } catch (_) {}
+        } catch (err) {
+          console.error("Failed to generate presigned URL for", r.s3Key, err);
+        }
       }
       return { ...r, ...(downloadUrl ? { downloadUrl } : {}) };
     })
   );
 
-  return respond(200, items);
+  const response = { items };
+  if (result.LastEvaluatedKey) {
+    response.nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString("base64url");
+  }
+
+  return respond(200, response);
 };
