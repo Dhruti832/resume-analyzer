@@ -23,10 +23,11 @@ resource "aws_s3_object" "frontend_config" {
   content_type = "application/javascript"
   content      = <<-JS
     window.APP_CONFIG = {
-      apiBase:         "${aws_apigatewayv2_api.main.api_endpoint}",
-      cognitoClientId: "${aws_cognito_user_pool_client.frontend.id}",
-      cognitoLoginUrl: "https://${aws_cognito_user_pool_domain.main.domain}.auth.us-east-1.amazoncognito.com",
-      frontendBase:    "${aws_apigatewayv2_api.frontend.api_endpoint}"
+      apiBase:          "${aws_apigatewayv2_api.main.api_endpoint}",
+      cognitoClientId:  "${aws_cognito_user_pool_client.frontend.id}",
+      cognitoLoginUrl:  "https://${aws_cognito_user_pool_domain.main.domain}.auth.us-east-1.amazoncognito.com",
+      cognitoIdpEndpoint: "https://cognito-idp.us-east-1.amazonaws.com/",
+      frontendBase:     "${aws_apigatewayv2_api.frontend.api_endpoint}"
     };
   JS
 }

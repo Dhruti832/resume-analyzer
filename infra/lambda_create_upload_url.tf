@@ -15,7 +15,9 @@ resource "aws_lambda_function" "create_upload_url" {
 
   environment {
     variables = {
-      BUCKET_NAME = aws_s3_bucket.resumes.bucket
+      BUCKET_NAME   = aws_s3_bucket.resumes.bucket
+      JOBS_TABLE    = aws_dynamodb_table.jobs.name
+      RESULTS_TABLE = aws_dynamodb_table.results.name
     }
   }
 }

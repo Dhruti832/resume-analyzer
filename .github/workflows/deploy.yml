@@ -40,6 +40,8 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
+        env:
+          TF_VAR_demo_user_password: ${{ secrets.DEMO_USER_PASSWORD }}
         run: terraform apply -auto-approve
 
       - name: Print outputs

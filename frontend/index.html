@@ -2,32 +2,313 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AI Resume Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Analyzer — Sign In</title>
   <style>
-    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5; margin: 0; }
-    .msg { text-align: center; color: #6b7280; }
-    .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #eef0fb, #f0f2f5);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 460px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.09);
+    }
+
+    /* Brand */
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1a1a2e; font-size: 1.05rem; margin-bottom: 24px; }
+    .brand svg { color: #4f46e5; }
+
+    /* Role selector (sign-up only) */
+    .role-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .role-btn { padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 12px; background: #fff; cursor: pointer; text-align: center; transition: border-color 0.15s, background 0.15s; }
+    .role-btn.active { border-color: #4f46e5; background: #eff6ff; }
+    .role-btn .role-icon { font-size: 1.5rem; margin-bottom: 5px; }
+    .role-btn .role-label { font-size: 0.83rem; font-weight: 700; color: #374151; }
+    .role-btn .role-desc { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+    .role-btn.active .role-label { color: #4f46e5; }
+
+    h1 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 6px; }
+    .sub { color: #6b7280; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.55; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 5px; margin-top: 14px; }
+    input[type=email], input[type=password], input[type=text] {
+      width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 0.92rem; font-family: inherit;
+    }
+    input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px #e0e7ff; }
+    .pw-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 4px; }
+    button.primary {
+      width: 100%; padding: 12px; background: #4f46e5; color: #fff;
+      border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; margin-top: 20px;
+    }
+    button.primary:hover:not(:disabled) { background: #4338ca; }
+    button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    #status { margin-top: 12px; font-size: 0.85rem; color: #6b7280; min-height: 18px; }
+    #status.error { color: #dc2626; }
+    #status.success { color: #16a34a; }
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid #d1d5db; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .divider { height: 1px; background: #f3f4f6; margin: 20px 0; }
+    .switch { text-align: center; font-size: 0.82rem; color: #6b7280; }
+    .switch a { color: #4f46e5; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .switch a:hover { text-decoration: underline; }
+    .switch-row { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .hint { margin-top: 20px; font-size: 0.75rem; color: #c4c9d4; text-align: center; }
+    .panel { display: none; }
+    .panel.active { display: block; }
   </style>
 </head>
 <body>
-<div class="msg">
-  <div class="spinner"></div>
-  <p>Signing you in…</p>
+<div class="card">
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    AI Resume Analyzer
+  </div>
+
+  <!-- SIGN IN -->
+  <div id="panel-signin" class="panel active">
+    <h1>Sign in</h1>
+    <p class="sub">Students and companies use the same login — you'll be routed to the right dashboard automatically.</p>
+    <form id="signin-form">
+      <label for="si-email">Email</label>
+      <input type="email" id="si-email" autocomplete="username" required />
+      <label for="si-password">Password</label>
+      <input type="password" id="si-password" autocomplete="current-password" required />
+      <button class="primary" id="si-btn" type="submit">Sign in</button>
+      <div id="status"></div>
+    </form>
+    <div class="divider"></div>
+    <div class="switch switch-row">
+      <span>New student? <a onclick="showSignup('student')">Student sign up</a></span>
+      <span>·</span>
+      <span>Hiring? <a onclick="showSignup('recruiter')">Company sign up</a></span>
+    </div>
+  </div>
+
+  <!-- SIGN UP -->
+  <div id="panel-signup" class="panel">
+    <h1>Create account</h1>
+    <p class="sub">Choose your role to get started.</p>
+
+    <!-- Role picker -->
+    <div class="role-toggle">
+      <button type="button" class="role-btn active" id="role-student" onclick="setRole('student')">
+        <div class="role-icon">🎓</div>
+        <div class="role-label">Student</div>
+        <div class="role-desc">Upload &amp; analyze resumes</div>
+      </button>
+      <button type="button" class="role-btn" id="role-recruiter" onclick="setRole('recruiter')">
+        <div class="role-icon">🏢</div>
+        <div class="role-label">Company</div>
+        <div class="role-desc">Post jobs &amp; review candidates</div>
+      </button>
+    </div>
+
+    <form id="signup-form">
+      <label for="su-email">Email</label>
+      <input type="email" id="su-email" autocomplete="username" required />
+      <label for="su-password">Password</label>
+      <input type="password" id="su-password" autocomplete="new-password" required />
+      <p class="pw-hint">8+ characters, upper, lower, and number required.</p>
+      <label for="su-confirm">Confirm password</label>
+      <input type="password" id="su-confirm" autocomplete="new-password" required />
+      <button class="primary" id="su-btn" type="submit">Create account</button>
+      <div id="status"></div>
+    </form>
+    <div class="divider"></div>
+    <div class="switch">Already have an account? <a onclick="showPanel('signin')">Sign in</a></div>
+  </div>
+
+  <!-- CONFIRM EMAIL -->
+  <div id="panel-confirm" class="panel">
+    <h1>Verify your email</h1>
+    <p class="sub" id="confirm-sub">We sent a 6-digit code to your email. Enter it below to activate your account.</p>
+    <form id="confirm-form">
+      <label for="conf-code">Verification code</label>
+      <input type="text" id="conf-code" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" required />
+      <button class="primary" id="conf-btn" type="submit">Verify &amp; sign in</button>
+      <div id="status"></div>
+    </form>
+    <div class="divider"></div>
+    <div class="switch"><a onclick="resendCode()">Resend code</a> &nbsp;·&nbsp; <a onclick="showPanel('signin')">Back to sign in</a></div>
+  </div>
+
+  <div class="hint">Job Matcher &amp; Resume Analyzer · CSCI 5411 term project</div>
 </div>
+
 <script src="/config.js"></script>
 <script>
-  const token = localStorage.getItem("access_token");
-  const group = localStorage.getItem("user_group");
+  if (localStorage.getItem("access_token")) {
+    window.location.replace(localStorage.getItem("user_group") === "recruiters" ? "/office.html" : "/student.html");
+  }
 
-  if (token) {
+  const IDP = window.APP_CONFIG.cognitoIdpEndpoint;
+  const CLIENT_ID = window.APP_CONFIG.cognitoClientId;
+  let pendingUsername = "";
+  let pendingPassword = "";
+  let selectedRole = "student";
+
+  // ── Panel + role helpers ──────────────────────────────────────────────────
+  function showPanel(name) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + name).classList.add("active");
+    setStatus("", false);
+  }
+
+  function showSignup(role) {
+    setRole(role);
+    showPanel("signup");
+  }
+
+  function setRole(role) {
+    selectedRole = role;
+    document.getElementById("role-student").classList.toggle("active", role === "student");
+    document.getElementById("role-recruiter").classList.toggle("active", role === "recruiter");
+    document.getElementById("su-btn").textContent = role === "recruiter" ? "Create company account" : "Create student account";
+  }
+
+  function setStatus(html, err = false, ok = false) {
+    const el = document.getElementById("status");
+    el.innerHTML = html;
+    el.className = err ? "error" : ok ? "success" : "";
+  }
+
+  // ── Cognito helper ────────────────────────────────────────────────────────
+  async function cognitoCall(target, payload) {
+    const res = await fetch(IDP, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-amz-json-1.1", "X-Amz-Target": target },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw Object.assign(new Error(data.message || data.__type || "Request failed"), { __type: data.__type });
+    return data;
+  }
+
+  // ── Sign in ───────────────────────────────────────────────────────────────
+  document.getElementById("signin-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("si-email").value.trim();
+    const password = document.getElementById("si-password").value;
+    const btn = document.getElementById("si-btn");
+    btn.disabled = true;
+    setStatus('<span class="spinner"></span>Signing in…');
+    try {
+      const data = await cognitoCall("AWSCognitoIdentityProviderService.InitiateAuth", {
+        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: CLIENT_ID,
+        AuthParameters: { USERNAME: username, PASSWORD: password },
+      });
+      storeAndRedirect(data.AuthenticationResult, username);
+    } catch (err) {
+      const msg = err.__type === "UserNotConfirmedException"
+        ? "Account not yet confirmed — check your email for the verification code."
+        : err.message.includes("Incorrect") || err.message.includes("password")
+        ? "Incorrect email or password."
+        : err.message;
+      setStatus(msg, true);
+      btn.disabled = false;
+    }
+  });
+
+  // ── Sign up ───────────────────────────────────────────────────────────────
+  document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById("su-email").value.trim();
+    const password = document.getElementById("su-password").value;
+    const confirm  = document.getElementById("su-confirm").value;
+    if (password !== confirm) { setStatus("Passwords do not match.", true); return; }
+    const btn = document.getElementById("su-btn");
+    btn.disabled = true;
+    setStatus('<span class="spinner"></span>Creating account…');
+    try {
+      await cognitoCall("AWSCognitoIdentityProviderService.SignUp", {
+        ClientId: CLIENT_ID,
+        Username: email,
+        Password: password,
+        UserAttributes: [{ Name: "email", Value: email }],
+        ClientMetadata: { role: selectedRole },
+      });
+      pendingUsername = email;
+      pendingPassword = password;
+      document.getElementById("confirm-sub").textContent =
+        `We sent a 6-digit code to ${email}. Enter it below to activate your account.`;
+      showPanel("confirm");
+    } catch (err) {
+      const msg = err.__type === "UsernameExistsException"
+        ? "An account with this email already exists."
+        : err.__type === "InvalidPasswordException"
+        ? "Password must be 8+ characters with upper, lower, and number."
+        : err.message;
+      setStatus(msg, true);
+      btn.disabled = false;
+    }
+  });
+
+  // ── Confirm email ─────────────────────────────────────────────────────────
+  document.getElementById("confirm-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("conf-code").value.trim();
+    const btn = document.getElementById("conf-btn");
+    btn.disabled = true;
+    setStatus('<span class="spinner"></span>Verifying…');
+    try {
+      await cognitoCall("AWSCognitoIdentityProviderService.ConfirmSignUp", {
+        ClientId: CLIENT_ID,
+        Username: pendingUsername,
+        ConfirmationCode: code,
+        ClientMetadata: { role: selectedRole },
+      });
+      setStatus('<span class="spinner"></span>Signing in…');
+      const auth = await cognitoCall("AWSCognitoIdentityProviderService.InitiateAuth", {
+        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: CLIENT_ID,
+        AuthParameters: { USERNAME: pendingUsername, PASSWORD: pendingPassword },
+      });
+      storeAndRedirect(auth.AuthenticationResult, pendingUsername);
+    } catch (err) {
+      const msg = err.__type === "CodeMismatchException"
+        ? "Incorrect code. Check your email and try again."
+        : err.__type === "ExpiredCodeException"
+        ? "Code has expired. Request a new one."
+        : err.message;
+      setStatus(msg, true);
+      btn.disabled = false;
+    }
+  });
+
+  async function resendCode() {
+    if (!pendingUsername) return;
+    setStatus('<span class="spinner"></span>Resending…');
+    try {
+      await cognitoCall("AWSCognitoIdentityProviderService.ResendConfirmationCode", {
+        ClientId: CLIENT_ID,
+        Username: pendingUsername,
+      });
+      setStatus("Code resent — check your inbox.", false, true);
+    } catch (err) { setStatus(err.message, true); }
+  }
+
+  // ── Store tokens + redirect ───────────────────────────────────────────────
+  function storeAndRedirect(authResult, username) {
+    const { AccessToken, IdToken } = authResult;
+    const payload = JSON.parse(atob(IdToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const groups = [].concat(payload["cognito:groups"] || []);
+    const group = groups.includes("recruiters") ? "recruiters" : "students";
+    localStorage.setItem("access_token", AccessToken);
+    localStorage.setItem("user_group", group);
+    localStorage.setItem("user_email", payload.email || payload["cognito:username"] || username);
     window.location.replace(group === "recruiters" ? "/office.html" : "/student.html");
-  } else {
-    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
-    const redirect = encodeURIComponent(frontendBase + "/callback.html");
-    window.location.replace(
-      `${cognitoLoginUrl}/login?client_id=${cognitoClientId}&response_type=token&scope=openid+profile+email&redirect_uri=${redirect}`
-    );
   }
 </script>
 </body>

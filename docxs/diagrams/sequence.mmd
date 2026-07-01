@@ -1,0 +1,35 @@
+sequenceDiagram
+    actor C as Candidate (Student)
+    participant Cog as Cognito Hosted UI
+    participant API as API Gateway (JWT authorizer)
+    participant UL as Lambda createUploadUrl
+    participant S3R as S3 ResumeBucket
+    participant ING as Lambda ingestUpload
+    participant SFN as Step Functions
+    participant EX as Lambda extractText
+    participant TX as Textract
+    participant PS as Lambda parseScore
+    participant HF as Hugging Face API
+    participant DB as DynamoDB ResultsTable
+    participant NOT as Lambda notifyResult
+    participant SNS as Amazon SNS
+
+    C->>Cog: Login (Hosted UI, implicit flow)
+    Cog-->>C: access_token + id_token
+    C->>API: POST /upload (Bearer JWT)
+    API->>UL: invoke (claims validated)
+    UL-->>C: presigned PUT URL + candidateId/resumeId
+    C->>S3R: PUT resume.pdf (direct, via presigned URL)
+    S3R-->>ING: ObjectCreated(PUT) event
+    ING->>SFN: StartExecution(candidateId, resumeId, jobId)
+    SFN->>EX: ExtractTextStep
+    EX->>TX: DetectDocumentText
+    TX-->>EX: extracted text
+    SFN->>PS: ParseAndScoreStep
+    PS->>HF: chat completion (resume text + job postings)
+    HF-->>PS: skills, matchScore, summary (JSON)
+    PS->>DB: PutItem (candidateId, resumeId, jobId, matchScore)
+    SFN->>NOT: NotifyResultStep
+    NOT->>SNS: Publish(candidateId, matchScore)
+    C->>API: GET /results/{candidateId} (Bearer JWT, polling)
+    API-->>C: match score + summary + skills

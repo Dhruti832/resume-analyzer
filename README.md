@@ -45,3 +45,9 @@ terraform apply -auto-approve
 > **Note:** AWS Academy Learner Lab credentials expire every ~4 hours.
 > Update `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`
 > in GitHub repository secrets before each deploy session.
+
+> **Note:** Set a `DEMO_USER_PASSWORD` GitHub repository secret (any password
+> meeting the Cognito pool's policy: 8+ chars, upper, lower, number) before
+> the next CI deploy — it's used to set a permanent password for the two
+> Terraform-managed demo accounts (`student1@test.com`, `recruiter1@test.com`).
+> Locally, set `demo_user_password` in `infra/terraform.tfvars` (gitignored).

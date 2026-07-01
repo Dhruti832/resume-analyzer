@@ -78,6 +78,14 @@ resource "aws_apigatewayv2_route" "get_results" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
+resource "aws_apigatewayv2_route" "get_my_results" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "GET /my-results"
+  target             = "integrations/${aws_apigatewayv2_integration.query_api.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
 resource "aws_lambda_permission" "allow_apigw_query_api" {
   statement_id  = "AllowAPIGatewayInvokeQueryApi"
   action        = "lambda:InvokeFunction"

@@ -17,6 +17,7 @@ resource "aws_lambda_function" "query_api" {
     variables = {
       JOBS_TABLE    = aws_dynamodb_table.jobs.name
       RESULTS_TABLE = aws_dynamodb_table.results.name
+      RESUME_BUCKET = aws_s3_bucket.resumes.bucket
     }
   }
 }

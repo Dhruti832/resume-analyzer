@@ -1,8 +1,12 @@
 const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const dynamodb = new DynamoDBClient({});
+const s3 = new S3Client({});
 const RESULTS_TABLE = process.env.RESULTS_TABLE;
+const RESUME_BUCKET = process.env.RESUME_BUCKET;
 
 function respond(statusCode, body) {
   return {
@@ -16,7 +20,6 @@ function getUserGroups(event) {
   const claim = event.requestContext?.authorizer?.jwt?.claims?.["cognito:groups"];
   if (!claim) return [];
   if (Array.isArray(claim)) return claim;
-  // API Gateway's JWT authorizer stringifies array claims Go-style, e.g. "[recruiters, students]"
   return claim.replace(/^\[|\]$/g, "").split(",").map((g) => g.trim()).filter(Boolean);
 }
 
@@ -34,9 +37,26 @@ exports.handler = async (event) => {
       IndexName: "jobId-matchScore-index",
       KeyConditionExpression: "jobId = :jid",
       ExpressionAttributeValues: { ":jid": { S: jobId } },
-      ScanIndexForward: false, // highest score first
+      ScanIndexForward: false,
     })
   );
 
-  return respond(200, (result.Items || []).map(unmarshall));
+  const items = await Promise.all(
+    (result.Items || []).map(async (item) => {
+      const r = unmarshall(item);
+      let downloadUrl = null;
+      if (r.s3Key && RESUME_BUCKET) {
+        try {
+          downloadUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand({ Bucket: RESUME_BUCKET, Key: r.s3Key }),
+            { expiresIn: 3600 }
+          );
+        } catch (_) {}
+      }
+      return { ...r, ...(downloadUrl ? { downloadUrl } : {}) };
+    })
+  );
+
+  return respond(200, items);
 };

@@ -7,94 +7,229 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; }
-    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-    nav .brand { font-weight: 700; color: #1a1a2e; font-size: 1rem; }
-    nav .user { font-size: 0.85rem; color: #6b7280; display: flex; align-items: center; gap: 12px; }
-    nav .user button { background: none; border: 1px solid #d1d5db; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #374151; }
-    .page { max-width: 700px; margin: 32px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
-    .card { background: #fff; border-radius: 14px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); }
-    .card h2 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 4px; }
-    .card .sub { font-size: 0.85rem; color: #6b7280; margin-bottom: 18px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+    /* ── Nav ── */
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 100; }
+    nav .brand { font-weight: 700; color: #1a1a2e; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    nav .brand svg { color: #4f46e5; }
+    nav .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; flex-shrink: 0; }
+    .nav-avatar:hover { box-shadow: 0 0 0 3px #e0e7ff; }
+    .nav-logout { width: 36px; height: 36px; border-radius: 8px; background: none; border: 1px solid #e5e7eb; color: #6b7280; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .nav-logout:hover { background: #fff1f2; border-color: #fca5a5; color: #dc2626; }
+    .profile-dropdown { position: absolute; top: 60px; right: 28px; width: 260px; background: #fff; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid #e5e7eb; overflow: hidden; display: none; z-index: 200; }
+    .profile-dropdown.open { display: block; animation: dropIn 0.15s ease; }
+    @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .pd-header { background: linear-gradient(135deg,#6366f1,#8b5cf6); padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .pd-avatar-lg { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.25); color: #fff; font-weight: 800; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.5); }
+    .pd-name { color: #fff; font-weight: 700; font-size: 0.92rem; text-align: center; word-break: break-all; }
+    .pd-role { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.2); color: #fff; font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+    .pd-body { padding: 10px; }
+    .pd-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 0.83rem; color: #374151; }
+    .pd-row svg { color: #9ca3af; flex-shrink: 0; }
+    .pd-row.danger { color: #dc2626; cursor: pointer; }
+    .pd-row.danger svg { color: #dc2626; }
+    .pd-row.danger:hover { background: #fff1f2; }
+    .pd-divider { height: 1px; background: #f3f4f6; margin: 4px 10px; }
+
+    /* ── Page ── */
+    .page { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
+
+    /* ── Page header ── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-header h1 { font-size: 1.3rem; color: #1a1a2e; font-weight: 700; }
+    .page-header .count { font-size: 0.85rem; color: #9ca3af; margin-left: 8px; font-weight: 400; }
+    .btn-add { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; background: #4f46e5; color: #fff; border: none; border-radius: 9px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn-add:hover { background: #4338ca; }
+    .btn-add svg { flex-shrink: 0; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 72px 20px; color: #9ca3af; }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.92rem; }
+
+    /* ── Job cards grid ── */
+    .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+    .job-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border: 1px solid #f0f0f0; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .job-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .job-title { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+    .job-meta { font-size: 0.75rem; color: #9ca3af; margin-top: 3px; }
+    .job-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: #eff6ff; color: #1d4ed8; white-space: nowrap; }
+    .job-desc { font-size: 0.82rem; color: #6b7280; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .job-skills { display: flex; flex-wrap: wrap; gap: 5px; max-height: 82px; overflow-y: auto; }
+    .skill-tag { background: #f3f4f6; color: #374151; border-radius: 20px; padding: 2px 9px; font-size: 0.73rem; font-weight: 500; }
+    .job-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-upload { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .btn-upload:hover { background: #4338ca; }
+    .btn-rankings { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; background: #fff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-rankings:hover { background: #eff6ff; }
+
+    /* ── Modal ── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-backdrop.open { display: flex; animation: fadeIn 0.15s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden; animation: slideUp 0.18s ease; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h2 { font-size: 1.05rem; color: #1a1a2e; font-weight: 700; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; line-height: 1; }
+    .modal-close:hover { background: #e5e7eb; }
+    .modal-body { padding: 22px 24px; }
+    .modal-footer { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
     .form-row.single { grid-template-columns: 1fr; }
     label { display: block; font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
-    input[type=text], textarea, select {
-      width: 100%; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 7px;
-      font-size: 0.88rem; color: #1f2937; outline: none;
-    }
+    input[type=text], textarea, select { width: 100%; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 7px; font-size: 0.88rem; color: #1f2937; outline: none; font-family: inherit; }
     input[type=text]:focus, textarea:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-    textarea { resize: vertical; min-height: 72px; }
-    input[type=file] { width: 100%; padding: 10px; border: 2px dashed #d1d5db; border-radius: 8px; font-size: 0.88rem; cursor: pointer; margin-bottom: 10px; }
-    button.primary { padding: 10px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-    button.primary:hover:not(:disabled) { background: #4338ca; }
-    button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
-    button.secondary { padding: 10px 20px; background: #fff; color: #4f46e5; border: 1px solid #6366f1; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-    button.secondary:hover { background: #eff6ff; }
-    .msg { margin-top: 10px; font-size: 0.85rem; color: #6b7280; min-height: 18px; }
-    .msg.ok { color: #15803d; } .msg.error { color: #dc2626; }
-    .job-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
-    .job-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-    .job-item .jt { font-weight: 600; font-size: 0.88rem; color: #1f2937; }
-    .job-item .ji { font-size: 0.75rem; color: #9ca3af; }
-    .job-item a { font-size: 0.78rem; color: #4f46e5; text-decoration: none; }
-    .job-item a:hover { text-decoration: underline; }
-    .upload-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+    textarea { resize: vertical; min-height: 80px; }
+    input[type=file] { display: none; }
+    .drop-zone { border: 2px dashed #c7d2fe; border-radius: 12px; padding: 32px 20px; text-align: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; background: #fafafe; }
+    .drop-zone:hover, .drop-zone.drag-over { background: #eff6ff; border-color: #6366f1; }
+    .drop-zone .dz-icon { color: #a5b4fc; margin-bottom: 10px; }
+    .drop-zone .dz-title { font-size: 0.88rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .drop-zone .dz-sub { font-size: 0.78rem; color: #9ca3af; margin-bottom: 14px; }
+    .dz-browse { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .dz-browse:hover { background: #4338ca; }
+    .dz-files { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .dz-file-row { display: flex; align-items: center; gap: 8px; background: #f3f4f6; border-radius: 7px; padding: 7px 10px; font-size: 0.8rem; color: #374151; }
+    .dz-file-row svg { color: #6366f1; flex-shrink: 0; }
+    .dz-file-row .dz-fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dz-file-row .dz-size { color: #9ca3af; font-size: 0.73rem; white-space: nowrap; }
+    .dz-file-row .dz-remove { background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0 2px; font-size: 1rem; line-height: 1; }
+    .dz-file-row .dz-remove:hover { color: #dc2626; }
+    .btn-primary { padding: 10px 22px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover:not(:disabled) { background: #4338ca; }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-cancel { padding: 10px 18px; background: #fff; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn-cancel:hover { background: #f9fafb; }
+    .modal-msg { margin-top: 10px; font-size: 0.83rem; min-height: 18px; }
+    .modal-msg.ok { color: #15803d; } .modal-msg.error { color: #dc2626; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #d1d5db; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
     .upload-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; }
     .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
     .badge.pending { background: #fef3c7; color: #92400e; }
     .badge.done { background: #dcfce7; color: #15803d; }
-    .badge.error { background: #fee2e2; color: #991b1b; }
-    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #d1d5db; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 4px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .badge.fail { background: #fee2e2; color: #991b1b; }
   </style>
 </head>
 <body>
+
+<!-- ── Nav ── -->
 <nav>
-  <span class="brand">AI Resume Analyzer — Recruiter</span>
-  <div class="user">
-    <span id="nav-email"></span>
-    <button onclick="logout()">Sign out</button>
+  <span class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    AI Resume Analyzer
+  </span>
+  <div class="nav-right">
+    <button class="nav-avatar" id="nav-avatar-btn" onclick="toggleProfile()" title="Profile">
+      <span id="nav-initial">?</span>
+    </button>
+    <button class="nav-logout" onclick="logout()" title="Sign out">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+  <div class="profile-dropdown" id="profile-dropdown">
+    <div class="pd-header">
+      <div class="pd-avatar-lg" id="pd-avatar-lg">?</div>
+      <div class="pd-name" id="pd-email-full">—</div>
+      <span class="pd-role">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Recruiter
+      </span>
+    </div>
+    <div class="pd-body">
+      <div class="pd-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span id="pd-email-row" style="word-break:break-all;font-size:0.82rem;color:#6b7280;">—</span>
+      </div>
+      <div class="pd-divider"></div>
+      <div class="pd-row danger" onclick="logout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </div>
+    </div>
   </div>
 </nav>
 
+<!-- ── Main ── -->
 <div class="page">
-
-  <!-- Post a Job -->
-  <div class="card">
-    <h2>Post a Job Opening</h2>
-    <p class="sub">New postings are immediately available for resume matching.</p>
-    <div class="form-row">
-      <div><label>Job ID (unique slug)</label><input type="text" id="f-jobId" placeholder="e.g. job-004" /></div>
-      <div><label>Job Title</label><input type="text" id="f-title" placeholder="e.g. Full Stack Engineer" /></div>
+  <div class="page-header">
+    <div>
+      <h1>Job Openings <span class="count" id="job-count"></span></h1>
     </div>
-    <div class="form-row single">
-      <div><label>Description</label><textarea id="f-desc" placeholder="Brief role description…"></textarea></div>
-    </div>
-    <div class="form-row">
-      <div><label>Required Skills (comma-separated)</label><input type="text" id="f-skills" placeholder="Node.js, AWS, React" /></div>
-      <div><label>Location</label><input type="text" id="f-loc" placeholder="Remote" /></div>
-    </div>
-    <button class="primary" id="post-btn" onclick="postJob()">Post Job</button>
-    <div class="msg" id="post-msg"></div>
-    <div class="job-list" id="job-list"></div>
+    <button class="btn-add" onclick="openJobModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Job
+    </button>
   </div>
+  <div id="jobs-container">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p><span class="spinner"></span> Loading jobs…</p>
+    </div>
+  </div>
+</div>
 
-  <!-- Bulk Upload -->
-  <div class="card">
-    <h2>Bulk Resume Upload</h2>
-    <p class="sub">Select a job, upload multiple PDFs — each is analyzed and ranked automatically.</p>
-    <div class="form-row single" style="margin-bottom:12px">
-      <div><label>Select Job</label>
-        <select id="bulk-job"><option value="">— choose a job —</option></select>
+<!-- ── Add Job Modal ── -->
+<div class="modal-backdrop" id="modal-job">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Job Opening</h2>
+      <button class="modal-close" onclick="closeModal('modal-job')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div><label>Job ID <span style="color:#9ca3af;font-weight:400">(unique slug)</span></label><input type="text" id="f-jobId" placeholder="e.g. job-004" /></div>
+        <div><label>Job Title</label><input type="text" id="f-title" placeholder="e.g. Full Stack Engineer" /></div>
       </div>
+      <div class="form-row single">
+        <div><label>Description</label><textarea id="f-desc" placeholder="Brief role description…"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div><label>Required Skills <span style="color:#9ca3af;font-weight:400">(comma-separated)</span></label><input type="text" id="f-skills" placeholder="Node.js, AWS, React" /></div>
+        <div><label>Location</label><input type="text" id="f-loc" placeholder="Remote" /></div>
+      </div>
+      <div class="modal-msg" id="job-modal-msg"></div>
     </div>
-    <label>Resumes (PDF, multiple allowed)</label>
-    <input type="file" id="bulk-files" accept="application/pdf" multiple />
-    <button class="primary" id="bulk-btn" onclick="bulkUpload()">Upload &amp; Analyze</button>
-    <div class="msg" id="bulk-msg"></div>
-    <div class="upload-list" id="upload-list"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-job')">Cancel</button>
+      <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job</button>
+    </div>
   </div>
+</div>
 
+<!-- ── Upload Resumes Modal ── -->
+<div class="modal-backdrop" id="modal-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="upload-modal-title">Upload Resumes</h2>
+      <button class="modal-close" onclick="closeModal('modal-upload')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:16px;">Upload one or more resume PDFs — each will be analyzed and ranked automatically against this job.</p>
+      <input type="file" id="bulk-files" accept="application/pdf" multiple />
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bulk-files').click()">
+        <div class="dz-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        </div>
+        <div class="dz-title">Drag &amp; drop resume PDFs here</div>
+        <div class="dz-sub">or click to browse from your computer</div>
+        <button class="dz-browse" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Browse Files
+        </button>
+        <div class="dz-files" id="dz-file-list"></div>
+      </div>
+      <div class="upload-list" id="upload-list"></div>
+      <div class="modal-msg" id="upload-modal-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-upload')">Close</button>
+      <button class="btn-primary" id="bulk-btn" onclick="bulkUpload()">Upload &amp; Analyze</button>
+    </div>
+  </div>
 </div>
 
 <script src="/config.js"></script>
@@ -102,73 +237,163 @@
   const token = localStorage.getItem("access_token");
   const group = localStorage.getItem("user_group");
   if (!token || group !== "recruiters") {
-    const { cognitoLoginUrl, cognitoClientId, frontendBase } = window.APP_CONFIG;
-    window.location.replace(token ? "/student.html" : `${cognitoLoginUrl}/login?client_id=${cognitoClientId}&response_type=token&scope=openid+profile+email&redirect_uri=${encodeURIComponent(frontendBase + "/callback.html")}`);
+    window.location.replace(token ? "/student.html" : "/index.html");
   }
-  document.getElementById("nav-email").textContent = localStorage.getItem("user_email") || "";
+
+  const userEmail = localStorage.getItem("user_email") || "";
+  const initial = (userEmail[0] || "?").toUpperCase();
+  document.getElementById("nav-initial").textContent = initial;
+  document.getElementById("pd-avatar-lg").textContent = initial;
+  document.getElementById("pd-email-full").textContent = userEmail;
+  document.getElementById("pd-email-row").textContent = userEmail;
 
   const API = window.APP_CONFIG.apiBase;
   const authHdr = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" });
 
-  // Load jobs
   let jobs = [];
+  let activeUploadJobId = null;
+  let selectedFiles = [];  // tracks files chosen for the upload modal
+
+  // ── Drop zone ────────────────────────────────────────────────────────────
+  function initDropZone() {
+    const dz = document.getElementById("drop-zone");
+    const input = document.getElementById("bulk-files");
+
+    input.addEventListener("change", () => { addFiles(Array.from(input.files)); input.value = ""; });
+
+    dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag-over"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("drag-over"));
+    dz.addEventListener("drop", e => {
+      e.preventDefault();
+      dz.classList.remove("drag-over");
+      addFiles(Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf"));
+    });
+  }
+
+  function addFiles(newFiles) {
+    newFiles.forEach(f => { if (!selectedFiles.find(x => x.name === f.name && x.size === f.size)) selectedFiles.push(f); });
+    renderFileList();
+  }
+
+  function removeFile(idx) { selectedFiles.splice(idx, 1); renderFileList(); }
+
+  function renderFileList() {
+    const el = document.getElementById("dz-file-list");
+    if (!selectedFiles.length) { el.innerHTML = ""; return; }
+    el.innerHTML = selectedFiles.map((f, i) => `
+      <div class="dz-file-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="dz-fname">${esc(f.name)}</span>
+        <span class="dz-size">${(f.size/1024).toFixed(0)} KB</span>
+        <button class="dz-remove" onclick="removeFile(${i})" title="Remove">✕</button>
+      </div>`).join("");
+  }
+
+  // ── Profile dropdown ─────────────────────────────────────────────────────
+  function toggleProfile() { document.getElementById("profile-dropdown").classList.toggle("open"); }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#nav-avatar-btn") && !e.target.closest("#profile-dropdown")) {
+      document.getElementById("profile-dropdown").classList.remove("open");
+    }
+  });
+
+  // ── Modal helpers ────────────────────────────────────────────────────────
+  function openJobModal() {
+    ["f-jobId","f-title","f-desc","f-skills","f-loc"].forEach(id => document.getElementById(id).value = "");
+    setModalMsg("job-modal-msg", "");
+    document.getElementById("modal-job").classList.add("open");
+  }
+
+  function openUploadModal(jobId, jobTitle) {
+    activeUploadJobId = jobId;
+    selectedFiles = [];
+    document.getElementById("upload-modal-title").textContent = `Upload Resumes — ${jobTitle}`;
+    document.getElementById("bulk-files").value = "";
+    document.getElementById("upload-list").innerHTML = "";
+    renderFileList();
+    setModalMsg("upload-modal-msg", "");
+    document.getElementById("bulk-btn").disabled = false;
+    document.getElementById("modal-upload").classList.add("open");
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+  document.querySelectorAll(".modal-backdrop").forEach(el => {
+    el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); });
+  });
+
+  // ── Load + render jobs ───────────────────────────────────────────────────
   async function loadJobs() {
     try {
       const res = await fetch(`${API}/jobs`, { headers: authHdr() });
       jobs = await res.json();
-      renderJobs();
-      renderBulkSelect();
-    } catch (_) {}
+    } catch (_) { jobs = []; }
+    renderJobs();
   }
 
   function renderJobs() {
-    const el = document.getElementById("job-list");
-    if (!jobs.length) { el.innerHTML = ""; return; }
-    el.innerHTML = jobs.map(j => `
-      <div class="job-item">
-        <div><div class="jt">${esc(j.title)}</div><div class="ji">${esc(j.jobId)}</div></div>
-        <a href="/results.html?jobId=${encodeURIComponent(j.jobId)}">View Rankings →</a>
-      </div>`).join("");
+    const container = document.getElementById("jobs-container");
+    document.getElementById("job-count").textContent = jobs.length ? `(${jobs.length})` : "";
+
+    if (!jobs.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No job openings yet.<br>Click <strong>Add Job</strong> to post your first one.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="jobs-grid">${jobs.map(j => `
+      <div class="job-card">
+        <div class="job-card-top">
+          <div>
+            <div class="job-title">${esc(j.title)}</div>
+            <div class="job-meta">${esc(j.jobId)}${j.location ? " · " + esc(j.location) : ""}</div>
+          </div>
+          <span class="job-badge">Open</span>
+        </div>
+        ${j.description ? `<div class="job-desc">${esc(j.description)}</div>` : ""}
+        ${(j.requiredSkills||[]).length ? `<div class="job-skills">${j.requiredSkills.map(s=>`<span class="skill-tag">${esc(s)}</span>`).join("")}</div>` : ""}
+        <div class="job-actions">
+          <button class="btn-upload" onclick="openUploadModal('${esc(j.jobId)}','${esc(j.title)}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Resumes
+          </button>
+          <a class="btn-rankings" href="/results.html?jobId=${encodeURIComponent(j.jobId)}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Rankings
+          </a>
+        </div>
+      </div>`).join("")}</div>`;
   }
 
-  function renderBulkSelect() {
-    const sel = document.getElementById("bulk-job");
-    sel.innerHTML = `<option value="">— choose a job —</option>` +
-      jobs.map(j => `<option value="${esc(j.jobId)}">${esc(j.title)} (${esc(j.jobId)})</option>`).join("");
-  }
-
+  // ── Post job ─────────────────────────────────────────────────────────────
   async function postJob() {
     const jobId = document.getElementById("f-jobId").value.trim();
     const title = document.getElementById("f-title").value.trim();
     const description = document.getElementById("f-desc").value.trim();
     const requiredSkills = document.getElementById("f-skills").value.split(",").map(s => s.trim()).filter(Boolean);
     const location = document.getElementById("f-loc").value.trim() || "Remote";
-
-    if (!jobId || !title) { setMsg("post-msg", "Job ID and Title are required.", "error"); return; }
+    if (!jobId || !title) { setModalMsg("job-modal-msg", "Job ID and Title are required.", "error"); return; }
 
     const btn = document.getElementById("post-btn");
     btn.disabled = true;
-    setMsg("post-msg", "Posting…");
-
+    setModalMsg("job-modal-msg", '<span class="spinner"></span>Posting…');
     try {
       const res = await fetch(`${API}/jobs`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId, title, description, requiredSkills, location }) });
       if (!res.ok) throw new Error(await res.text());
-      setMsg("post-msg", `Job "${title}" posted successfully.`, "ok");
-      ["f-jobId","f-title","f-desc","f-skills","f-loc"].forEach(id => document.getElementById(id).value = "");
+      setModalMsg("job-modal-msg", `"${title}" posted!`, "ok");
+      setTimeout(() => closeModal("modal-job"), 900);
       await loadJobs();
-    } catch (e) { setMsg("post-msg", "Error: " + e.message, "error"); }
+    } catch (e) { setModalMsg("job-modal-msg", "Error: " + e.message, "error"); }
     btn.disabled = false;
   }
 
+  // ── Bulk resume upload ───────────────────────────────────────────────────
   async function bulkUpload() {
-    const jobId = document.getElementById("bulk-job").value;
-    const files = Array.from(document.getElementById("bulk-files").files);
-    if (!jobId) { setMsg("bulk-msg", "Please select a job.", "error"); return; }
-    if (!files.length) { setMsg("bulk-msg", "Please select at least one PDF.", "error"); return; }
+    const files = selectedFiles.slice();
+    if (!activeUploadJobId) { setModalMsg("upload-modal-msg", "No job selected.", "error"); return; }
+    if (!files.length) { setModalMsg("upload-modal-msg", "Please add at least one PDF.", "error"); return; }
 
     document.getElementById("bulk-btn").disabled = true;
-    setMsg("bulk-msg", `Uploading ${files.length} resume(s)…`);
-
+    setModalMsg("upload-modal-msg", "");
     const listEl = document.getElementById("upload-list");
     listEl.innerHTML = "";
 
@@ -184,28 +409,33 @@
     for (const { file, idx } of items) {
       setBadge(idx, "pending", "Uploading…");
       try {
-        const res = await fetch(`${API}/upload`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId }) });
+        const candidateName = file.name.replace(/\.pdf$/i, "");
+        const res = await fetch(`${API}/upload`, { method: "POST", headers: authHdr(), body: JSON.stringify({ jobId: activeUploadJobId, candidateName }) });
         if (!res.ok) throw new Error(`API ${res.status}`);
         const { uploadUrl, candidateId } = await res.json();
-
         const put = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": "application/pdf" } });
         if (!put.ok) throw new Error(`S3 ${put.status}`);
-
-        setBadge(idx, "done", `Queued (${candidateId.slice(0,8)}…)`);
-      } catch (e) {
-        setBadge(idx, "error", "Failed: " + e.message);
-      }
+        setBadge(idx, "done", `Queued · ${candidateId.slice(0,8)}…`);
+      } catch (e) { setBadge(idx, "fail", "Failed"); }
     }
-
-    setMsg("bulk-msg", "All uploads done. Analysis runs in the background — check Rankings in ~1 min.", "ok");
+    setModalMsg("upload-modal-msg", '<span class="spinner"></span>Redirecting to analysis…', "ok");
+    setTimeout(() => window.location.href = `/results.html?jobId=${encodeURIComponent(activeUploadJobId)}`, 1200);
     document.getElementById("bulk-btn").disabled = false;
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
   function setBadge(idx, cls, text) {
     const el = document.getElementById(`item-${idx}`);
-    if (el) el.querySelector(".badge").className = `badge ${cls}`, el.querySelector(".badge").textContent = text;
+    if (!el) return;
+    const b = el.querySelector(".badge");
+    b.className = `badge ${cls}`;
+    b.textContent = text;
   }
-  function setMsg(id, text, cls = "") { const el = document.getElementById(id); el.textContent = text; el.className = `msg ${cls}`; }
+  function setModalMsg(id, html, cls = "") {
+    const el = document.getElementById(id);
+    el.innerHTML = html;
+    el.className = `modal-msg ${cls}`;
+  }
   function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function logout() {
     localStorage.clear();
@@ -214,6 +444,7 @@
   }
 
   loadJobs();
+  initDropZone();
 </script>
 </body>
 </html>

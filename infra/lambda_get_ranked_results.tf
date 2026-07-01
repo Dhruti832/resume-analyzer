@@ -16,6 +16,7 @@ resource "aws_lambda_function" "get_ranked_results" {
   environment {
     variables = {
       RESULTS_TABLE = aws_dynamodb_table.results.name
+      RESUME_BUCKET = aws_s3_bucket.resumes.bucket
     }
   }
 }
