@@ -113,7 +113,7 @@ all AWS SDK calls — no AWS credentials needed.
 
 ```
 Test Suites: 6 passed
-Tests:       75 passed
+Tests:       71 passed
 ```
 
 ## Deploy
