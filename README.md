@@ -1,4 +1,4 @@
-# AI Resume Analyzer & Job Matcher
+﻿# AI Resume Analyzer & Job Matcher
 
 Serverless AI-powered resume screening system built on AWS using Terraform IaC.
 Two user roles: **students** (upload resume, see their own AI score and feedback)
@@ -8,34 +8,34 @@ and **recruiters** (post jobs, bulk-upload resumes, view ranked candidates with 
 
 ```
 Student/Recruiter Browser
-        │
-        ▼
-API Gateway (HTTP API) ──JWT authorizer──▶ Cognito User Pool
-        │                                  (students / recruiters groups)
-   ┌────┴────────────────────────────────────────────┐
-   │  POST /upload     GET /jobs    POST /jobs        │
-   │  GET /results     GET /my-results                │
-   │  GET /jobs/{id}/results                          │
-   └────┬────────────────────────────────────────────┘
-        │
+        â”‚
+        â–¼
+API Gateway (HTTP API) â”€â”€JWT authorizerâ”€â”€â–¶ Cognito User Pool
+        â”‚                                  (students / recruiters groups)
+   â”Œâ”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+   â”‚  POST /upload     GET /jobs    POST /jobs        â”‚
+   â”‚  GET /results     GET /my-results                â”‚
+   â”‚  GET /jobs/{id}/results                          â”‚
+   â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+        â”‚
    Lambda Functions
-        │
-        ├─ createUploadUrl ──▶ S3 presigned PUT URL ──▶ Resume S3 Bucket
-        │                       (seeds ResultsTable: status=pending)
-        │
-        ├─ S3 Event ──▶ ingestUpload ──▶ Step Functions State Machine
-        │                                       │
-        │                         ┌─────────────┼─────────────┐
-        │                    ExtractText    ParseAndScore  NotifyResult
-        │                    (Textract)   (HF LLM via     (SNS email)
-        │                                Secrets Manager)
-        │                         │
-        │                    MarkFailedStep (DynamoDB SDK) ──▶ NotifyErrorStep (SNS)
-        │                    [on any error]
-        │
-        ├─ queryApi ──▶ DynamoDB ResultsTable / JobsTable
-        ├─ getRankedResults ──▶ DynamoDB GSI (jobId-matchScore-index, sorted desc)
-        └─ createJob ──▶ DynamoDB JobsTable
+        â”‚
+        â”œâ”€ createUploadUrl â”€â”€â–¶ S3 presigned PUT URL â”€â”€â–¶ Resume S3 Bucket
+        â”‚                       (seeds ResultsTable: status=pending)
+        â”‚
+        â”œâ”€ S3 Event â”€â”€â–¶ ingestUpload â”€â”€â–¶ Step Functions State Machine
+        â”‚                                       â”‚
+        â”‚                         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚                    ExtractText    ParseAndScore  NotifyResult
+        â”‚                    (Textract)   (HF LLM via     (SNS email)
+        â”‚                                Secrets Manager)
+        â”‚                         â”‚
+        â”‚                    MarkFailedStep (DynamoDB SDK) â”€â”€â–¶ NotifyErrorStep (SNS)
+        â”‚                    [on any error]
+        â”‚
+        â”œâ”€ queryApi â”€â”€â–¶ DynamoDB ResultsTable / JobsTable
+        â”œâ”€ getRankedResults â”€â”€â–¶ DynamoDB GSI (jobId-matchScore-index, sorted desc)
+        â””â”€ createJob â”€â”€â–¶ DynamoDB JobsTable
 
 DynamoDB ResultsTable: PK=candidateId, SK=resumeId
   GSIs: userId-createdAt-index (student history), jobId-matchScore-index (recruiter ranking)
@@ -44,13 +44,13 @@ Monitoring: CloudWatch Alarms on all 8 Lambdas + Step Functions failures + Dynam
 ```
 
 The frontend is served via a dedicated Lambda (`serveFrontend`) reading from a private S3 bucket
-through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
+through API Gateway â€” CloudFront is not available in AWS Academy Learner Lab.
 
 ## Features
 
 **Student portal**
 - Upload resume as PDF against any posted job or paste a custom job description
-- Real-time analysis progress stepper (Upload → Textract → AI Scoring → Complete)
+- Real-time analysis progress stepper (Upload â†’ Textract â†’ AI Scoring â†’ Complete)
 - History tab showing all past analyses with status (pending / completed / failed)
 - Per-analysis: match score, matched skills, strengths, gaps, and improvement recommendations
 - Resume PDF download
@@ -59,7 +59,7 @@ through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
 - Post job openings with required skills and location
 - Drag-and-drop bulk resume upload (multiple PDFs at once)
 - Ranked candidates page with:
-  - Stat cards (total applicants, average score, top score, strong matches ≥70)
+  - Stat cards (total applicants, average score, top score, strong matches â‰¥70)
   - Score distribution bar chart + top skills frequency chart (Chart.js)
   - Ranked table with score pill, mini progress bar, skills, and summary
 
@@ -109,7 +109,7 @@ npm test
 ```
 
 Tests use [aws-sdk-client-mock](https://github.com/m-radzikowski/aws-sdk-client-mock) to mock
-all AWS SDK calls — no AWS credentials needed.
+all AWS SDK calls â€” no AWS credentials needed.
 
 ```
 Test Suites: 6 passed
@@ -120,13 +120,13 @@ Tests:       71 passed
 
 ### Prerequisites
 
-- Terraform ≥ 1.9
+- Terraform â‰¥ 1.9
 - AWS CLI with Learner Lab credentials
 - `infra/terraform.tfvars` (gitignored):
 
 ```hcl
 demo_user_password = "YourPassword123!"
-notification_email = "you@example.com"   # optional — SNS alert recipient
+notification_email = "you@example.com"   # optional â€” SNS alert recipient
 hf_token           = "hf_..."            # Hugging Face API token
 ```
 
@@ -155,8 +155,8 @@ Two Terraform-managed accounts are created automatically:
 
 GitHub Actions runs on every push to `main`:
 
-1. **Unit tests** — `npm test` must pass before deploy starts
-2. **Terraform apply** — deploys infra and Lambda code changes to AWS
+1. **Unit tests** â€” `npm test` must pass before deploy starts
+2. **Terraform apply** â€” deploys infra and Lambda code changes to AWS
 
 Secrets required in GitHub repository settings:
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`,
