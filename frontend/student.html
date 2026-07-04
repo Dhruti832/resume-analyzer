@@ -51,9 +51,10 @@
     label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; margin-top: 14px; }
     label:first-of-type { margin-top: 0; }
 
-    /* Two-column analyze layout */
-    .analyze-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .analyze-col { display: flex; flex-direction: column; }
+    /* Single-row analyze layout */
+    .analyze-grid { display: flex; gap: 16px; align-items: flex-end; }
+    .analyze-col { display: flex; flex-direction: column; flex: 1; }
+    .analyze-col.btn-col { flex: 0 0 220px; }
 
     /* Job source toggle */
     .source-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
@@ -269,11 +270,15 @@
           </div>
         </div>
 
-        <!-- RIGHT: Resume + Analyze button -->
+        <!-- MIDDLE: Resume -->
         <div class="analyze-col">
           <label for="resume">Your Resume (PDF)</label>
           <input type="file" id="resume" accept="application/pdf" />
-          <button class="primary" id="btn-analyze" onclick="analyze()" style="margin-top:24px">Analyze Resume</button>
+        </div>
+
+        <!-- RIGHT: Analyze button -->
+        <div class="analyze-col btn-col">
+          <button class="primary" id="btn-analyze" onclick="analyze()" style="margin-top:0">Analyze Resume</button>
         </div>
       </div>
       <div id="status"></div>
