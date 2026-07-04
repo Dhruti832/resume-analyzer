@@ -124,12 +124,9 @@ resource "null_resource" "student1_permanent_password" {
     password = var.demo_user_password
   }
   provisioner "local-exec" {
-    # Explicit bash interpreter so quoting is consistent across the GitHub
-    # Actions ubuntu-latest runner and local Windows dev (via Git Bash) --
-    # Terraform's default cmd.exe interpreter on Windows does not honor
-    # backslash-escaped quotes, which silently corrupted the password.
-    interpreter = ["bash", "-c"]
-    command     = "aws cognito-idp admin-set-user-password --user-pool-id \"$POOL_ID\" --username \"$CUSERNAME\" --password \"$CPASSWORD\" --permanent --region us-east-1"
+    # pwsh (PowerShell Core) is pre-installed on ubuntu-latest and Windows.
+    interpreter = ["pwsh", "-Command"]
+    command     = "aws cognito-idp admin-set-user-password --user-pool-id $env:POOL_ID --username $env:CUSERNAME --password $env:CPASSWORD --permanent --region us-east-1"
     environment = {
       POOL_ID   = aws_cognito_user_pool.main.id
       CUSERNAME = aws_cognito_user.student1.username
@@ -161,8 +158,8 @@ resource "null_resource" "recruiter1_permanent_password" {
     password = var.demo_user_password
   }
   provisioner "local-exec" {
-    interpreter = ["bash", "-c"]
-    command     = "aws cognito-idp admin-set-user-password --user-pool-id \"$POOL_ID\" --username \"$CUSERNAME\" --password \"$CPASSWORD\" --permanent --region us-east-1"
+    interpreter = ["pwsh", "-Command"]
+    command     = "aws cognito-idp admin-set-user-password --user-pool-id $env:POOL_ID --username $env:CUSERNAME --password $env:CPASSWORD --permanent --region us-east-1"
     environment = {
       POOL_ID   = aws_cognito_user_pool.main.id
       CUSERNAME = aws_cognito_user.recruiter1.username
