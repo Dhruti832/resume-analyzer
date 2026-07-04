@@ -51,6 +51,10 @@
     label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; margin-top: 14px; }
     label:first-of-type { margin-top: 0; }
 
+    /* Two-column analyze layout */
+    .analyze-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .analyze-col { display: flex; flex-direction: column; }
+
     /* Job source toggle */
     .source-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
     .source-btn { flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; font-size: 0.83rem; font-weight: 600; color: #6b7280; cursor: pointer; }
@@ -246,27 +250,32 @@
       <h2>Analyze Your Resume</h2>
       <p class="sub">Provide the job description and your resume, and we'll score your fit.</p>
 
-      <label>Job Description</label>
-      <div class="source-toggle">
-        <button class="source-btn active" id="btn-pdf" onclick="setSource('pdf')">Upload Job PDF</button>
-        <button class="source-btn" id="btn-custom" onclick="setSource('custom')">Paste Description</button>
+      <div class="analyze-grid">
+        <!-- LEFT: Job Description -->
+        <div class="analyze-col">
+          <label>Job Description</label>
+          <div class="source-toggle">
+            <button class="source-btn active" id="btn-pdf" onclick="setSource('pdf')">Upload Job PDF</button>
+            <button class="source-btn" id="btn-custom" onclick="setSource('custom')">Paste Description</button>
+          </div>
+
+          <div id="src-pdf">
+            <input type="file" id="job-pdf" accept="application/pdf" />
+            <div id="job-pdf-status" style="font-size:0.78rem;color:#6b7280;margin-top:6px;min-height:16px;"></div>
+          </div>
+
+          <div id="src-custom" style="display:none">
+            <textarea id="job-desc" placeholder="Paste the job description here…" style="height:180px"></textarea>
+          </div>
+        </div>
+
+        <!-- RIGHT: Resume + Analyze button -->
+        <div class="analyze-col">
+          <label for="resume">Your Resume (PDF)</label>
+          <input type="file" id="resume" accept="application/pdf" />
+          <button class="primary" id="btn-analyze" onclick="analyze()" style="margin-top:24px">Analyze Resume</button>
+        </div>
       </div>
-
-      <!-- Job description PDF upload -->
-      <div id="src-pdf">
-        <input type="file" id="job-pdf" accept="application/pdf" />
-        <div id="job-pdf-status" style="font-size:0.78rem;color:#6b7280;margin-top:6px;min-height:16px;"></div>
-      </div>
-
-      <!-- Paste job description -->
-      <div id="src-custom" style="display:none">
-        <textarea id="job-desc" placeholder="Paste the job description here…"></textarea>
-      </div>
-
-      <label for="resume" style="margin-top:16px">Your Resume (PDF)</label>
-      <input type="file" id="resume" accept="application/pdf" />
-
-      <button class="primary" id="btn-analyze" onclick="analyze()">Analyze Resume</button>
       <div id="status"></div>
       <div id="progress-steps">
         <div class="step-row" id="step-1">
