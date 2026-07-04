@@ -38,7 +38,7 @@
     .page { max-width: 1200px; margin: 32px auto; padding: 0 16px; }
 
     /* Tabs */
-    .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #e5e7eb; padding: 3px; border-radius: 10px; }
+    .tabs { display: flex; gap: 2px; margin: 0 auto 20px; max-width: 680px; background: #e5e7eb; padding: 3px; border-radius: 10px; }
     .tab { flex: 1; padding: 9px; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; background: transparent; color: #6b7280; }
     .tab.active { background: #fff; color: #1a1a2e; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     .panel { display: none; }
@@ -51,10 +51,9 @@
     label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 6px; margin-top: 14px; }
     label:first-of-type { margin-top: 0; }
 
-    /* Single-row analyze layout */
-    .analyze-grid { display: flex; gap: 16px; align-items: flex-end; }
-    .analyze-col { display: flex; flex-direction: column; flex: 1; }
-    .analyze-col.btn-col { flex: 0 0 220px; }
+    /* Analyze panel narrower than history, tabs stay fixed width */
+    #panel-analyze { max-width: 680px; margin: 0 auto; }
+
 
     /* Job source toggle */
     .source-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
@@ -158,15 +157,12 @@
     .toast-msg { flex: 1; line-height: 1.4; }
     @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
 
-    /* ── Progress steps ── */
-    #progress-steps { margin-top: 16px; display: none; background: #fafafe; border: 1px solid #e0e7ff; border-radius: 10px; padding: 14px 18px; }
-    .step-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 0.84rem; color: #c4c9d4; transition: color 0.2s; }
-    .step-row.active { color: #4f46e5; font-weight: 600; }
-    .step-row.done   { color: #15803d; }
-    .step-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #e5e7eb; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.65rem; font-weight: 700; transition: all 0.2s; }
-    .step-row.active .step-dot { border-color: #4f46e5; background: #eff6ff; color: #4f46e5; }
-    .step-row.done   .step-dot { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
-    .step-connector { width: 2px; height: 10px; background: #e5e7eb; margin-left: 10px; }
+    /* ── Analyze loader overlay ── */
+    #analyze-loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 5000; align-items: center; justify-content: center; }
+    #analyze-loader.show { display: flex; }
+    .loader-box { background: #fff; border-radius: 16px; padding: 40px 48px; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
+    .loader-ring { width: 56px; height: 56px; border: 5px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.85s linear infinite; margin: 0 auto 18px; }
+    .loader-label { font-size: 0.95rem; font-weight: 600; color: #1a1a2e; }
 
     /* ── Skeleton loader ── */
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -251,54 +247,26 @@
       <h2>Analyze Your Resume</h2>
       <p class="sub">Provide the job description and your resume, and we'll score your fit.</p>
 
-      <div class="analyze-grid">
-        <!-- LEFT: Job Description -->
-        <div class="analyze-col">
-          <label>Job Description</label>
-          <div class="source-toggle">
-            <button class="source-btn active" id="btn-pdf" onclick="setSource('pdf')">Upload Job PDF</button>
-            <button class="source-btn" id="btn-custom" onclick="setSource('custom')">Paste Description</button>
-          </div>
-
-          <div id="src-pdf">
-            <input type="file" id="job-pdf" accept="application/pdf" />
-            <div id="job-pdf-status" style="font-size:0.78rem;color:#6b7280;margin-top:6px;min-height:16px;"></div>
-          </div>
-
-          <div id="src-custom" style="display:none">
-            <textarea id="job-desc" placeholder="Paste the job description here…" style="height:180px"></textarea>
-          </div>
-        </div>
-
-        <!-- MIDDLE: Resume -->
-        <div class="analyze-col">
-          <label for="resume">Your Resume (PDF)</label>
-          <input type="file" id="resume" accept="application/pdf" />
-        </div>
-
-        <!-- RIGHT: Analyze button -->
-        <div class="analyze-col btn-col">
-          <button class="primary" id="btn-analyze" onclick="analyze()" style="margin-top:0">Analyze Resume</button>
-        </div>
+      <label>Job Description</label>
+      <div class="source-toggle">
+        <button class="source-btn active" id="btn-pdf" onclick="setSource('pdf')">Upload Job PDF</button>
+        <button class="source-btn" id="btn-custom" onclick="setSource('custom')">Paste Description</button>
       </div>
+
+      <div id="src-pdf">
+        <input type="file" id="job-pdf" accept="application/pdf" />
+        <div id="job-pdf-status" style="font-size:0.78rem;color:#6b7280;margin-top:6px;min-height:16px;"></div>
+      </div>
+
+      <div id="src-custom" style="display:none">
+        <textarea id="job-desc" placeholder="Paste the job description here…" style="height:180px"></textarea>
+      </div>
+
+      <label for="resume">Your Resume (PDF)</label>
+      <input type="file" id="resume" accept="application/pdf" />
+
+      <button class="primary" id="btn-analyze" onclick="analyze()">Analyze Resume</button>
       <div id="status"></div>
-      <div id="progress-steps">
-        <div class="step-row" id="step-1">
-          <div class="step-dot">1</div><span>Uploading resume</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-row" id="step-2">
-          <div class="step-dot">2</div><span>Extracting text with Textract</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-row" id="step-3">
-          <div class="step-dot">3</div><span>Scoring with AI model</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step-row" id="step-4">
-          <div class="step-dot">✓</div><span>Complete</span>
-        </div>
-      </div>
       <div id="result"></div>
     </div>
   </div>
@@ -393,17 +361,13 @@
     setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; setTimeout(() => t.remove(), 320); }, duration);
   }
 
-  // ── Progress stepper ──────────────────────────────────────────────────────
+  // ── Analyze loader ────────────────────────────────────────────────────────
   function setStep(n) {
-    document.getElementById("progress-steps").style.display = "block";
-    [1, 2, 3, 4].forEach(i => {
-      const el = document.getElementById(`step-${i}`);
-      el.classList.remove("active", "done");
-      if (i < n) el.classList.add("done");
-      else if (i === n) el.classList.add("active");
-    });
+    const labels = { 1: "Uploading resume…", 2: "Extracting text…", 3: "Scoring with AI…", 4: "Completing…" };
+    document.getElementById("loader-label").textContent = labels[n] || "Analyzing your resume…";
+    document.getElementById("analyze-loader").classList.add("show");
   }
-  function hideSteps() { document.getElementById("progress-steps").style.display = "none"; }
+  function hideSteps() { document.getElementById("analyze-loader").classList.remove("show"); }
 
   // ── Analyze ───────────────────────────────────────────────────────────────
   async function analyze() {
@@ -626,5 +590,12 @@
     window.location.replace(`${cognitoLoginUrl}/logout?client_id=${cognitoClientId}&logout_uri=${encodeURIComponent(frontendBase + "/index.html")}`);
   }
 </script>
+
+<div id="analyze-loader">
+  <div class="loader-box">
+    <div class="loader-ring"></div>
+    <div class="loader-label" id="loader-label">Analyzing your resume…</div>
+  </div>
+</div>
 </body>
 </html>

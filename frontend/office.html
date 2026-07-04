@@ -218,26 +218,41 @@
       <button class="modal-close" onclick="closeModal('modal-upload')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:16px;">Upload one or more resume PDFs — each will be analyzed and ranked automatically against this job.</p>
-      <input type="file" id="bulk-files" accept="application/pdf" multiple />
-      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bulk-files').click()">
-        <div class="dz-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      <div id="upload-form-area">
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:16px;">Upload one or more resume PDFs — each will be analyzed and ranked automatically against this job.</p>
+        <input type="file" id="bulk-files" accept="application/pdf" multiple />
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bulk-files').click()">
+          <div class="dz-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          </div>
+          <div class="dz-title">Drag &amp; drop resume PDFs here</div>
+          <div class="dz-sub">or click to browse from your computer</div>
+          <button class="dz-browse" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Browse Files
+          </button>
+          <div class="dz-files" id="dz-file-list"></div>
         </div>
-        <div class="dz-title">Drag &amp; drop resume PDFs here</div>
-        <div class="dz-sub">or click to browse from your computer</div>
-        <button class="dz-browse" type="button">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Browse Files
-        </button>
-        <div class="dz-files" id="dz-file-list"></div>
+        <div class="upload-list" id="upload-list"></div>
+        <div class="modal-msg" id="upload-modal-msg"></div>
       </div>
-      <div class="upload-list" id="upload-list"></div>
-      <div class="modal-msg" id="upload-modal-msg"></div>
+
+      <div id="upload-success" style="display:none; text-align:center; padding: 24px 0 8px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:#f0fdf4;border:2px solid #86efac;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:6px;">Resumes uploaded successfully!</div>
+        <div style="font-size:0.85rem;color:#6b7280;">Analysis is running in the background. Visit the rankings page to see results as they come in.</div>
+      </div>
     </div>
-    <div class="modal-footer">
+
+    <div class="modal-footer" id="upload-footer">
       <button class="btn-cancel" onclick="closeModal('modal-upload')">Close</button>
       <button class="btn-primary" id="bulk-btn" onclick="bulkUpload()">Upload &amp; Analyze</button>
+    </div>
+    <div class="modal-footer" id="success-footer" style="display:none;">
+      <button class="btn-cancel" onclick="closeModal('modal-upload')">Close</button>
+      <a class="btn-rankings" id="go-rankings-link" href="#">View Rankings</a>
     </div>
   </div>
 </div>
@@ -323,6 +338,11 @@
     renderFileList();
     setModalMsg("upload-modal-msg", "");
     document.getElementById("bulk-btn").disabled = false;
+    // Reset to form state in case success state is showing
+    document.getElementById("upload-form-area").style.display = "block";
+    document.getElementById("upload-success").style.display = "none";
+    document.getElementById("upload-footer").style.display = "flex";
+    document.getElementById("success-footer").style.display = "none";
     document.getElementById("modal-upload").classList.add("open");
   }
 
@@ -431,8 +451,12 @@
         setBadge(idx, "done", `Queued · ${candidateId.slice(0,8)}…`);
       } catch (e) { setBadge(idx, "fail", "Failed"); }
     }
-    showToast("Resumes uploaded — redirecting to rankings…", "success");
-    setTimeout(() => window.location.href = `/results.html?jobId=${encodeURIComponent(activeUploadJobId)}`, 1200);
+    document.getElementById("upload-form-area").style.display = "none";
+    document.getElementById("upload-success").style.display = "block";
+    document.getElementById("upload-footer").style.display = "none";
+    document.getElementById("success-footer").style.display = "flex";
+    document.getElementById("go-rankings-link").href = `/results.html?jobId=${encodeURIComponent(activeUploadJobId)}`;
+    showToast("Resumes uploaded successfully!", "success");
     document.getElementById("bulk-btn").disabled = false;
   }
 
