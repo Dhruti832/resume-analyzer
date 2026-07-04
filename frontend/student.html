@@ -35,8 +35,8 @@
     .pd-row.danger svg { color: #dc2626; }
     .pd-row.danger:hover { background: #fff1f2; }
     .pd-divider { height: 1px; background: #f3f4f6; margin: 4px 10px; }
-    .page { max-width: 600px; margin: 32px auto; padding: 0 16px; transition: max-width 0.2s; }
-    .page.wide { max-width: 1200px; }
+    .page { max-width: 1200px; margin: 32px auto; padding: 0 16px; }
+    #panel-analyze .card { max-width: 600px; margin: 0 auto 16px; }
 
     /* Tabs */
     .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #e5e7eb; padding: 3px; border-radius: 10px; }
@@ -330,7 +330,6 @@
     document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
     el.classList.add("active");
     document.getElementById("panel-" + name).classList.add("active");
-    document.querySelector(".page").classList.toggle("wide", name === "history");
     if (name === "history") loadHistory();
   }
 
