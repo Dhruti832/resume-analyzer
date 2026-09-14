@@ -1,10 +1,25 @@
-﻿# AI Resume Analyzer & Job Matcher
+# AI Resume Analyzer & Job Matcher
 
-Serverless AI-powered resume screening system built on AWS using Terraform IaC.
-Two user roles: **students** (upload resume, see their own AI score and feedback)
-and **recruiters** (post jobs, bulk-upload resumes, view ranked candidates with charts).
+A serverless, AI-powered resume screening platform built on AWS with Terraform IaC. Students upload a resume and get an instant AI-generated match score and feedback; recruiters post jobs and review AI-ranked candidates with charts and analytics.
+
+[![CI](https://github.com/Dhruti832/resume-analyzer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Dhruti832/resume-analyzer/actions/workflows/deploy.yml)
+![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen)
+![Node](https://img.shields.io/badge/node-20.x-339933?logo=node.js&logoColor=white)
+![Terraform](https://img.shields.io/badge/IaC-Terraform-844FBA?logo=terraform&logoColor=white)
+![AWS](https://img.shields.io/badge/cloud-AWS-FF9900?logo=amazonaws&logoColor=white)
+
+## Highlights
+
+- **Fully serverless AWS architecture** — 8 Lambda functions orchestrated by Step Functions, fronted by API Gateway with Cognito JWT auth
+- **Real AI integration** — resumes are OCR'd with Amazon Textract, then scored and summarized by an LLM (Qwen2.5-7B-Instruct via Hugging Face Inference API)
+- **Two-role product**: a student portal (upload, track, review feedback) and a recruiter portal (post jobs, bulk-upload, ranked results with charts)
+- **Infrastructure as Code** — the entire stack (Cognito, DynamoDB, S3, Step Functions, IAM, alarms) is defined in Terraform and deployed via GitHub Actions CI/CD
+- **Tested and monitored** — 71 unit tests mocking every AWS SDK call, plus 10 CloudWatch alarms across Lambdas, Step Functions, and DynamoDB
+- **Security-conscious** — least-privilege IAM, Secrets Manager for API keys, ownership checks on every read, HSTS/CSP/X-Frame-Options on all responses
 
 ## Architecture
+
+![Architecture diagram](docxs/diagrams/architecture.drawio.png)
 
 ```
 Student/Recruiter Browser
@@ -47,6 +62,9 @@ Monitoring: CloudWatch Alarms on all 8 Lambdas + Step Functions failures + Dynam
 The frontend is served via a dedicated Lambda (`serveFrontend`) reading from a private S3 bucket
 through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
 
+Full sequence diagrams for registration, upload/analysis, job posting, and the refresh job are in
+[`docxs/diagrams`](docxs/diagrams).
+
 ## Features
 
 **Student portal**
@@ -72,7 +90,7 @@ through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
 - HF API token stored in AWS Secrets Manager (never in code or IaC)
 - Security headers on all frontend responses (HSTS, X-Frame-Options, CSP)
 
-## Services Used
+## Tech Stack
 
 | Category | Services |
 |---|---|
@@ -87,6 +105,8 @@ through API Gateway — CloudFront is not available in AWS Academy Learner Lab.
 | Secrets | AWS Secrets Manager |
 | Monitoring | Amazon CloudWatch (10 metric alarms) |
 | IaC / CI | Terraform, GitHub Actions |
+| Frontend | Vanilla JS, Chart.js |
+| Testing | Jest, aws-sdk-client-mock |
 
 ## API Endpoints
 
@@ -163,3 +183,27 @@ GitHub Actions runs on every push to `main`:
 Secrets required in GitHub repository settings:
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`,
 `DEMO_USER_PASSWORD`, `HF_TOKEN`
+
+## Project Structure
+
+```
+lambdas/     8 Lambda function handlers (Node.js)
+infra/       Terraform IaC (API Gateway, Cognito, DynamoDB, S3, Step Functions, alarms)
+frontend/    Static HTML/JS/CSS served through API Gateway
+tests/       Jest unit tests (mocked AWS SDK)
+docxs/       Project documentation, diagrams, and reports
+```
+
+## Documentation
+
+Detailed docs — Software Requirements Specification, System Design Document, AWS Deployment
+Guide, Testing Report, User Manual, and architecture/sequence diagrams — are in
+[`docxs/`](docxs).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+## Author
+
+Built by [Dhruti Patel](https://github.com/Dhruti832).
