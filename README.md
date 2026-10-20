@@ -10,7 +10,7 @@ A serverless, AI-powered resume screening platform built on AWS with Terraform I
 
 ## Highlights
 
-- **Fully serverless AWS architecture** — 8 Lambda functions orchestrated by Step Functions, fronted by API Gateway with Cognito JWT auth
+- **Fully serverless AWS architecture**: 11 Lambda functions behind API Gateway with Cognito JWT auth, plus a Step Functions pipeline that extracts, scores and reports on each upload
 - **Real AI integration** — resumes are OCR'd with Amazon Textract, then scored and summarized by an LLM (Qwen2.5-7B-Instruct via Hugging Face Inference API)
 - **Two-role product**: a student portal (upload, track, review feedback) and a recruiter portal (post jobs, bulk-upload, ranked results with charts)
 - **Infrastructure as Code** — the entire stack (Cognito, DynamoDB, S3, Step Functions, IAM, alarms) is defined in Terraform and deployed via GitHub Actions CI/CD
@@ -56,7 +56,7 @@ API Gateway (HTTP API) ──JWT authorizer──▶ Cognito User Pool
 DynamoDB ResultsTable: PK=candidateId, SK=resumeId
   GSIs: userId-createdAt-index (student history), jobId-matchScore-index (recruiter ranking)
 
-Monitoring: CloudWatch Alarms on all 8 Lambdas + Step Functions failures + DynamoDB throttles
+Monitoring: CloudWatch alarms on the 8 core Lambdas + Step Functions failures + DynamoDB throttles
 ```
 
 The frontend is served via a dedicated Lambda (`serveFrontend`) reading from a private S3 bucket
@@ -187,7 +187,7 @@ Secrets required in GitHub repository settings:
 ## Project Structure
 
 ```
-lambdas/     8 Lambda function handlers (Node.js)
+lambdas/     11 Lambda function handlers (Node.js)
 infra/       Terraform IaC (API Gateway, Cognito, DynamoDB, S3, Step Functions, alarms)
 frontend/    Static HTML/JS/CSS served through API Gateway
 tests/       Jest unit tests (mocked AWS SDK)
